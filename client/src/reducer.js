@@ -56,17 +56,17 @@ export default function reducer(state, { type, payload }) {
 				pins: updatedPins,
 				currentPin: updatedPin,
 			}
-		case 'CREATE_PIN':
-			const newPin = payload
-			const prevPins = state.pins.filter(pin => pin._id !== newPin._id)
+		case 'CREATE_FORM':
+			const newForm = payload
+			const prevForms = state.forms.filter(form => form._id !== newForm._id)
 			return {
 				...state,
-				pins: [ ...prevPins, newPin ],
+				forms: [ ...prevForms, newForm ],
 			}
 		case 'DELETE_DRAFT':
 			return { ...state, draft: null }
-		case 'GET_PINS':
-			return { ...state, pins: payload }
+		case 'GET_FORMS':
+			return { ...state, forms: payload }
 		default:
 			return state
 	}

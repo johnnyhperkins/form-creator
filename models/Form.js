@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const _ = require('lodash')
-import { METHODS } from '../constants'
 
 const FormSchema = new mongoose.Schema(
 	{
@@ -9,7 +8,7 @@ const FormSchema = new mongoose.Schema(
 		formFields: [ { type: mongoose.Schema.ObjectId, ref: 'FormField' } ],
 		action: String,
 		createdAt: { type: Date, default: Date.now },
-		method: { type: String, enum: _.values(METHODS) },
+		method: String,
 	},
 	{ timestamps: true },
 )

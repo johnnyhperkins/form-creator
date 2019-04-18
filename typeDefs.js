@@ -9,16 +9,16 @@ module.exports = gql`
 	}
 
 	type Form {
-		id: ID!
+		_id: ID!
 		title: String!
 		createdBy: User!
 		formFields: [FormField!]!
 		action: String
-		method: METHODS
+		method: String
 	}
 
 	type FormField {
-		id: ID!
+		_id: ID!
 		label: String
 		labelPosition: LABEL_POSITIONS
 		formElement: FORM_ELEMENTS
@@ -28,7 +28,7 @@ module.exports = gql`
 	}
 
 	type Attribute {
-		id: ID!
+		_id: ID!
 		formField: FormField!
 		attr: ATTRIBUTES
 		value: String
@@ -41,12 +41,6 @@ module.exports = gql`
 		BUTTON
 		LABEL
 		OPTION
-	}
-
-	enum METHODS {
-		POST
-		GET
-		PATCH
 	}
 
 	enum ATTRIBUTES {
@@ -95,5 +89,14 @@ module.exports = gql`
 
 	type Query {
 		me: User
+		getForms: [Form!]!
+	}
+
+	input CreateFormInput {
+		title: String!
+	}
+
+	type Mutation {
+		createForm(input: CreateFormInput!): Form
 	}
 `
