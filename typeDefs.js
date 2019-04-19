@@ -89,7 +89,7 @@ module.exports = gql`
 
 	type Query {
 		me: User
-		getForms: [Form!]!
+		getForms(createdBy: ID!): [Form!]!
 	}
 
 	input CreateFormInput {
@@ -98,5 +98,6 @@ module.exports = gql`
 
 	type Mutation {
 		createForm(input: CreateFormInput!): Form
+		deleteForm(formId: ID!): Form
 	}
 `

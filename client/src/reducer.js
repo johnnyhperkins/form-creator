@@ -16,12 +16,12 @@ export default function reducer(state, { type, payload }) {
 				currentUser: null,
 				isAuth: false,
 			}
-		case 'DELETE_PIN':
-			const deletedPin = payload
-			const filteredPins = state.pins.filter(pin => pin._id !== deletedPin._id)
+		case 'DELETE_FORM':
+			const deletedFormId = payload
+			const filteredForms = state.forms.filter(pin => pin._id !== deletedFormId)
 			return {
 				...state,
-				pins: filteredPins,
+				forms: filteredForms,
 			}
 		case 'CREATE_DRAFT':
 			return {

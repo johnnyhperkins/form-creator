@@ -1,13 +1,15 @@
 import React, { useState, useContext, useEffect } from 'react'
+import {Link} from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles'
 import Context from '../context'
 import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
-import { CREATE_FORM_MUTATION } from '../graphql/mutations'
+import { CREATE_FORM_MUTATION, DELETE_FORM_MUTATION } from '../graphql/mutations'
 import { GET_FORMS_QUERY } from '../graphql/queries'
+// import { Query } from "react-apollo";
 import { useClient } from '../client'
-// import DeleteIcon from "@material-ui/icons/DeleteTwoTone";
+import DeleteIcon from "@material-ui/icons/DeleteTwoTone";
 
 // first want to check if user has forms,
 // if so list them otherwise only display the create new forms button
@@ -17,28 +19,29 @@ const Home = ({ classes }) => {
 	const client = useClient()
 
 	useEffect(() => {
-		
-		getForms()
-		console.log(state.currentUser)
-		console.log(state);
+		getForms(state.currentUser._id)
 	}, [])
 
 	const handleSubmit = async () => {
 		const {createForm} = await client.request(CREATE_FORM_MUTATION, { title })
 		dispatch({ type: 'CREATE_FORM', payload: createForm })
-		console.log(state);
 		setTitle('')
 	}
 
-	const getForms = async () => {
-		const { getForms } = await client.request(GET_FORMS_QUERY)
+	const handleDeleteForm = async (id) => {
+		await client.request(DELETE_FORM_MUTATION, {formId: id})
+		dispatch({type: 'DELETE_FORM', payload: id})
+	}
+
+	const getForms = async (createdBy) => {
+		const { getForms } = await client.request(GET_FORMS_QUERY, {createdBy})
 		dispatch({ type: 'GET_FORMS', payload: getForms })
 	}
 
 	return (
 		<div className={classes.root}>
 			<form className={classes.form}>
-				<Typography>Create A Form</Typography>
+				<Typography variant="h2">Create A Form</Typography>
 				<TextField
 					required
 					label="Required"
@@ -53,11 +56,15 @@ const Home = ({ classes }) => {
 			{state.forms &&
 				state.forms.map(form => {
 					return (
-						<div key={form._id}>
-							<p>{form.title}</p>
+						<div className={classes.formItem} key={form._id}>
+							<Typography variant="body1" ><Link to={`/form/${form._id}`}>{form.title}</Link></Typography>
+							<Button onClick={() => handleDeleteForm(form._id)}>
+									<DeleteIcon className={classes.deleteIcon} />
+								</Button>
 						</div>
 					)
 				})}
+			
 		</div>
 	)
 }
@@ -73,10 +80,18 @@ const styles = {
 	textField: {
 		width: 200,
 	},
+	deleteIcon: {
+		color: 'red',
+	},
 	form: {
 		display: 'flex',
 		justifyContent: 'center',
 		flexDirection: 'column',
+		alignItems: 'center',
+	},
+	formItem: {
+		display: 'flex',
+		justifyContent: 'space-between',
 		alignItems: 'center',
 	},
 	rootMobile: {
@@ -88,9 +103,6 @@ const styles = {
 		top: 0,
 		left: 0,
 		margin: '1em',
-	},
-	deleteIcon: {
-		color: 'red',
 	},
 	popupImage: {
 		padding: '0.4em',
