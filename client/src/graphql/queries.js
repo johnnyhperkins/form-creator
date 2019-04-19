@@ -17,3 +17,16 @@ export const GET_FORMS_QUERY = `query($createdBy: ID!) {
     }
   }
 }`
+
+export const GET_FORM_QUERY = `query($formId: ID!, $createdBy: ID) {
+  getForm(formId: $formId, createdBy: $createdBy) {
+    _id
+    title
+    action
+    method
+    createdBy {
+      _id
+      name
+    }
+  }
+}`

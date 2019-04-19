@@ -1,15 +1,18 @@
 import React, { useState, useContext, useEffect } from 'react'
-import {Link} from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles'
 import Context from '../context'
 import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
-import { CREATE_FORM_MUTATION, DELETE_FORM_MUTATION } from '../graphql/mutations'
+import {
+	CREATE_FORM_MUTATION,
+	DELETE_FORM_MUTATION,
+} from '../graphql/mutations'
 import { GET_FORMS_QUERY } from '../graphql/queries'
 // import { Query } from "react-apollo";
 import { useClient } from '../client'
-import DeleteIcon from "@material-ui/icons/DeleteTwoTone";
+import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 
 // first want to check if user has forms,
 // if so list them otherwise only display the create new forms button
@@ -23,18 +26,18 @@ const Home = ({ classes }) => {
 	}, [])
 
 	const handleSubmit = async () => {
-		const {createForm} = await client.request(CREATE_FORM_MUTATION, { title })
+		const { createForm } = await client.request(CREATE_FORM_MUTATION, { title })
 		dispatch({ type: 'CREATE_FORM', payload: createForm })
 		setTitle('')
 	}
 
-	const handleDeleteForm = async (id) => {
-		await client.request(DELETE_FORM_MUTATION, {formId: id})
-		dispatch({type: 'DELETE_FORM', payload: id})
+	const handleDeleteForm = async id => {
+		await client.request(DELETE_FORM_MUTATION, { formId: id })
+		dispatch({ type: 'DELETE_FORM', payload: id })
 	}
 
-	const getForms = async (createdBy) => {
-		const { getForms } = await client.request(GET_FORMS_QUERY, {createdBy})
+	const getForms = async createdBy => {
+		const { getForms } = await client.request(GET_FORMS_QUERY, { createdBy })
 		dispatch({ type: 'GET_FORMS', payload: getForms })
 	}
 
@@ -51,20 +54,28 @@ const Home = ({ classes }) => {
 					value={title}
 					onChange={e => setTitle(e.target.value)}
 				/>
-				<Button onClick={handleSubmit}>Create New Form</Button>
+				<Button variant="outlined" onClick={handleSubmit}>
+					Create New Form
+				</Button>
 			</form>
-			{state.forms &&
-				state.forms.map(form => {
-					return (
-						<div className={classes.formItem} key={form._id}>
-							<Typography variant="body1" ><Link to={`/form/${form._id}`}>{form.title}</Link></Typography>
-							<Button onClick={() => handleDeleteForm(form._id)}>
+			<hr />
+			{state.forms && (
+				<div>
+					<Typography variant="h4">My Forms</Typography>
+					{state.forms.map(form => {
+						return (
+							<div className={classes.formItem} key={form._id}>
+								<Typography variant="body1">
+									<Link to={`/form/${form._id}`}>{form.title}</Link>
+								</Typography>
+								<Button onClick={() => handleDeleteForm(form._id)}>
 									<DeleteIcon className={classes.deleteIcon} />
 								</Button>
-						</div>
-					)
-				})}
-			
+							</div>
+						)
+					})}
+				</div>
+			)}
 		</div>
 	)
 }

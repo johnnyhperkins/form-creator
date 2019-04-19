@@ -1,6 +1,6 @@
 const { AuthenticationError } = require('apollo-server')
 const Form = require('./models/Form')
-const ObjectId = require('mongoose').Types.ObjectId; 
+const ObjectId = require('mongoose').Types.ObjectId
 
 const authenticated = next => (root, args, ctx, info) => {
 	if (!ctx.currentUser) {
@@ -13,9 +13,20 @@ module.exports = {
 	Query: {
 		me: authenticated((root, args, ctx) => ctx.currentUser),
 		getForms: async (root, args, ctx) => {
-			// in mongoose the empty filter returns all documents
-			const forms = await Form.find({createdBy: new ObjectId(args.createdBy)}).populate('createdBy')
+			const forms = await Form.find({
+				createdBy: new ObjectId(args.createdBy),
+			}).populate('createdBy')
 			return forms
+		},
+		getForm: async (root, args, ctx) => {
+			const form = await Form.findById(args.formId).populate('createdBy')
+
+			if (String(form.createdBy._id) !== args.createdBy) {
+				throw new AuthenticationError(
+					'You do not have permission to edit this form',
+				)
+			}
+			return form
 		},
 	},
 	Mutation: {
@@ -28,8 +39,13 @@ module.exports = {
 			return formAdded
 		}),
 		deleteForm: authenticated(async (root, args, ctx) => {
-			const formDeleted = await Form.findOneAndDelete({ _id: args.formId }).exec()
+			const formDeleted = await Form.findOneAndDelete({
+				_id: args.formId,
+			}).exec()
 			return formDeleted
+		}),
+		editForm: authenticated(async (root, args, ctx) => {
+			const form = await Form.findById(args.formId)
 		}),
 	},
 }

@@ -1,24 +1,44 @@
-import React, { useState, useContext} from 'react'
-import withRoot from '../withRoot'
+import React, { useState, useContext, useEffect } from 'react'
+import { withRouter } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles'
+import { GET_FORM_QUERY } from '../graphql/queries'
 import Context from '../context'
 
 import Typography from '@material-ui/core/Typography'
 
 import { useClient } from '../client'
 
-
 // first want to check if user has forms,
 // if so list them otherwise only display the create new forms button
-const EditForm = ({ classes }) => {
+const EditForm = ({ classes, match }) => {
 	const { state, dispatch } = useContext(Context)
-	const [ title, setTitle ] = useState('')
+	const { currentForm, currentUser } = state
+
 	const client = useClient()
+
+	useEffect(() => {
+		const { id } = match.params
+		getForm(id)
+	}, [])
+
+	const getForm = async formId => {
+		const { getForm } = await client.request(GET_FORM_QUERY, {
+			formId,
+			createdBy: currentUser._id,
+		})
+		// debugger
+		dispatch({ type: 'GET_FORM', payload: getForm })
+	}
 
 	return (
 		<div className={classes.root}>
 			<form className={classes.form}>
 				<Typography variant="h2">Edit Form</Typography>
+				{currentForm && (
+					<div>
+						<p>{currentForm.title}</p>
+					</div>
+				)}
 			</form>
 		</div>
 	)
@@ -74,4 +94,4 @@ const styles = {
 	},
 }
 
-export default withRoot(withStyles(styles)(EditForm))
+export default withRouter(withStyles(styles)(EditForm))

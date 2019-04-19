@@ -40,11 +40,10 @@ export default function reducer(state, { type, payload }) {
 					latitude: payload.latitude,
 				},
 			}
-		case 'SET_PIN':
+		case 'GET_FORM':
 			return {
 				...state,
-				currentPin: payload,
-				draft: null,
+				currentForm: payload,
 			}
 		case 'UPDATE_PIN':
 			const updatedPin = payload
