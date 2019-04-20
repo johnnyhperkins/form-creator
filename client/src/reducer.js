@@ -5,17 +5,20 @@ export default function reducer(state, { type, payload }) {
 				...state,
 				currentUser: payload,
 			}
+
 		case 'IS_LOGGED_IN':
 			return {
 				...state,
 				isAuth: payload,
 			}
+
 		case 'SIGNOUT_USER':
 			return {
 				...state,
 				currentUser: null,
 				isAuth: false,
 			}
+
 		case 'DELETE_FORM':
 			const deletedFormId = payload
 			const filteredForms = state.forms.filter(pin => pin._id !== deletedFormId)
@@ -23,37 +26,20 @@ export default function reducer(state, { type, payload }) {
 				...state,
 				forms: filteredForms,
 			}
-		case 'CREATE_DRAFT':
-			return {
-				...state,
-				draft: {
-					longitude: 0,
-					latitude: 0,
-				},
-				currentPin: null,
-			}
-		case 'UPDATE_DRAFT_LOCATION':
-			return {
-				...state,
-				draft: {
-					longitude: payload.longitude,
-					latitude: payload.latitude,
-				},
-			}
+
 		case 'GET_FORM':
 			return {
 				...state,
 				currentForm: payload,
 			}
-		case 'UPDATE_PIN':
-			const updatedPin = payload
-			const updatedPins = state.pins.map(
-				pin => (pin._id === updatedPin._id ? updatedPin : pin),
-			)
+
+		case 'UPDATE_FORM_FIELD':
 			return {
 				...state,
-				pins: updatedPins,
-				currentPin: updatedPin,
+				currentForm: {
+					...state.currentForm,
+					...payload,
+				},
 			}
 		case 'CREATE_FORM':
 			const newForm = payload

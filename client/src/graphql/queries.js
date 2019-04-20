@@ -24,6 +24,16 @@ export const GET_FORM_QUERY = `query($formId: ID!, $createdBy: ID) {
     title
     action
     method
+    formFields {
+      label
+      labelPosition
+      formElement
+      inputType
+      attributes {
+        attr
+        value
+      }
+    }
     createdBy {
       _id
       name

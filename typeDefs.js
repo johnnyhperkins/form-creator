@@ -10,28 +10,51 @@ module.exports = gql`
 
 	type Form {
 		_id: ID!
-		title: String!
 		createdBy: User!
-		formFields: [FormField!]!
+		title: String!
 		action: String
 		method: String
+		formFields: [FormField!]!
 	}
 
 	type FormField {
-		_id: ID!
 		label: String
 		labelPosition: LABEL_POSITIONS
 		formElement: FORM_ELEMENTS
 		inputType: INPUT_TYPES
-		form: Form!
 		attributes: [Attribute!]!
 	}
 
 	type Attribute {
-		_id: ID!
-		formField: FormField!
 		attr: ATTRIBUTES
 		value: String
+	}
+
+	type Query {
+		me: User
+		getForms(createdBy: ID!): [Form!]!
+		getForm(formId: ID!, createdBy: ID): Form!
+	}
+
+	input FormInput {
+		title: String!
+		action: String
+		method: String
+	}
+
+	input FormFieldInput {
+		label: String
+		labelPosition: LABEL_POSITIONS
+		formElement: FORM_ELEMENTS
+		inputType: INPUT_TYPES
+	}
+
+	type Mutation {
+		createForm(input: FormInput!): Form
+		deleteForm(formId: ID!): Form
+		updateForm(_id: ID!, input: FormInput): Form
+		addFormField(formId: ID!, input: FormFieldInput): Form
+		addFormFieldAttribute(formId: ID!, attr: ATTRIBUTES, value: String): Form
 	}
 
 	enum FORM_ELEMENTS {
@@ -85,21 +108,5 @@ module.exports = gql`
 		BOTTOM
 		INLINE
 		TOP
-	}
-
-	type Query {
-		me: User
-		getForms(createdBy: ID!): [Form!]!
-		getForm(formId: ID!, createdBy: ID): Form!
-	}
-
-	input CreateFormInput {
-		title: String!
-	}
-
-	type Mutation {
-		createForm(input: CreateFormInput!): Form
-		deleteForm(formId: ID!): Form
-		editForm(formId: ID!, action: String, method: String): Form
 	}
 `

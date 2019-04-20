@@ -12,16 +12,16 @@ const authenticated = next => (root, args, ctx, info) => {
 module.exports = {
 	Query: {
 		me: authenticated((root, args, ctx) => ctx.currentUser),
-		getForms: async (root, args, ctx) => {
+		async getForms(root, { createdBy }) {
 			const forms = await Form.find({
-				createdBy: new ObjectId(args.createdBy),
+				createdBy: new ObjectId(createdBy),
 			}).populate('createdBy')
 			return forms
 		},
-		getForm: async (root, args, ctx) => {
-			const form = await Form.findById(args.formId).populate('createdBy')
+		async getForm(root, { formId, createdBy }) {
+			const form = await Form.findById(formId).populate('createdBy')
 
-			if (String(form.createdBy._id) !== args.createdBy) {
+			if (String(form.createdBy._id) !== createdBy) {
 				throw new AuthenticationError(
 					'You do not have permission to edit this form',
 				)
@@ -38,14 +38,33 @@ module.exports = {
 			const formAdded = await Form.populate(newForm, 'createdBy')
 			return formAdded
 		}),
-		deleteForm: authenticated(async (root, args, ctx) => {
+		deleteForm: authenticated(async (root, args) => {
 			const formDeleted = await Form.findOneAndDelete({
 				_id: args.formId,
 			}).exec()
 			return formDeleted
 		}),
-		editForm: authenticated(async (root, args, ctx) => {
-			const form = await Form.findById(args.formId)
-		}),
+		async updateForm(root, { _id, input }) {
+			return await Form.findOneAndUpdate(
+				{
+					_id,
+				},
+				input,
+				{
+					new: true,
+				},
+			)
+		},
+		async addFormFieldAttribute(root, { formId, input }) {},
+		async addFormField(root, { formId, input }) {
+			const form = await Form.findOneAndUpdate(
+				{
+					_id: formId,
+				},
+				{ $push: { formFields: input } },
+				{ new: true },
+			)
+			return form
+		},
 	},
 }
