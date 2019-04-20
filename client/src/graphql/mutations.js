@@ -36,19 +36,46 @@ export const UPDATE_FORM_MUTATION = `
   }
 `
 
-export const ADD_FIELD_MUTATION = `
-  mutation($formId: ID!, 
+export const EDIT_FIELD_MUTATION = `
+  mutation($formId: ID!, $idx: Int,
+    $type: FIELD_TYPES,
     $label: String, 
     $labelPosition: LABEL_POSITIONS, 
     $formElement: FORM_ELEMENTS, 
     $inputType: INPUT_TYPES) {
-    addFormField(formId: $formId, input: {
+    editFormField(formId: $formId, idx: $idx, input: {
+      type: $type,
       label: $label,
       labelPosition: $labelPosition,
       formElement: $formElement,
       inputType: $inputType
     }) {
       formFields {
+        type
+        label
+        labelPosition
+        formElement
+        inputType
+      }
+    }
+  }`
+
+export const ADD_FIELD_MUTATION = `
+  mutation($formId: ID!, 
+    $type: FIELD_TYPES,
+    $label: String, 
+    $labelPosition: LABEL_POSITIONS, 
+    $formElement: FORM_ELEMENTS, 
+    $inputType: INPUT_TYPES) {
+    addFormField(formId: $formId, input: {
+      type: $type,
+      label: $label,
+      labelPosition: $labelPosition,
+      formElement: $formElement,
+      inputType: $inputType
+    }) {
+      formFields {
+        type
         label
         labelPosition
         formElement

@@ -18,6 +18,7 @@ module.exports = gql`
 	}
 
 	type FormField {
+		type: FIELD_TYPES
 		label: String
 		labelPosition: LABEL_POSITIONS
 		formElement: FORM_ELEMENTS
@@ -43,6 +44,7 @@ module.exports = gql`
 	}
 
 	input FormFieldInput {
+		type: FIELD_TYPES
 		label: String
 		labelPosition: LABEL_POSITIONS
 		formElement: FORM_ELEMENTS
@@ -55,6 +57,14 @@ module.exports = gql`
 		updateForm(_id: ID!, input: FormInput): Form
 		addFormField(formId: ID!, input: FormFieldInput): Form
 		addFormFieldAttribute(formId: ID!, attr: ATTRIBUTES, value: String): Form
+		editFormField(formId: ID!, idx: Int, input: FormFieldInput): Form
+	}
+
+	enum FIELD_TYPES {
+		TEXT
+		TEXT_AREA
+		BUTTON
+		SELECT
 	}
 
 	enum FORM_ELEMENTS {

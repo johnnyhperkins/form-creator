@@ -7,6 +7,13 @@ const FORM_ELEMENTS = {
 	OPTION: 'OPTION',
 }
 
+const FIELD_TYPES = {
+	TEXT: 'Text',
+	TEXT_AREA: 'Text Area',
+	BUTTON: 'Button',
+	SELECT: 'Select',
+}
+
 const ATTRIBUTES = {
 	STYLE: 'STYLE',
 	READ_ONLY: 'READ_ONLY',
@@ -56,4 +63,5 @@ module.exports = {
 	ATTRIBUTES,
 	INPUT_TYPES,
 	LABEL_POSITIONS,
+	FIELD_TYPES,
 }

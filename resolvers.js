@@ -55,6 +55,7 @@ module.exports = {
 				},
 			)
 		},
+		async editFormField(root, { formId, idx, input }) {},
 		async addFormFieldAttribute(root, { formId, input }) {},
 		async addFormField(root, { formId, input }) {
 			const form = await Form.findOneAndUpdate(

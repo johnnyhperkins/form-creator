@@ -11,9 +11,10 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 // import FormHelperText from '@material-ui/core/FormHelperText'
 import FormControl from '@material-ui/core/FormControl'
-import { FORM_ELEMENTS, INPUT_TYPES, LABEL_POSITIONS } from '../constants'
+import { FIELD_TYPES } from '../constants'
 import Select from '@material-ui/core/Select'
 
+import FormField from '../components/FormField'
 import { GET_FORM_QUERY } from '../graphql/queries'
 import { UPDATE_FORM_MUTATION, ADD_FIELD_MUTATION } from '../graphql/mutations'
 import Context from '../context'
@@ -23,13 +24,12 @@ const EditForm = ({ classes, match }) => {
 	const { state, dispatch } = useContext(Context)
 	const { currentForm, currentUser } = state
 	const [ action, setAction ] = useState('')
+	const [ advancedControls, setAdvancedControls ] = useState(false)
 	const [ title, setTitle ] = useState('')
 	const [ method, setMethod ] = useState('')
 	const [ label, setLabel ] = useState('')
 
-	const [ inputType, setInputType ] = useState('')
-	const [ formElement, setFormElement ] = useState('')
-	const [ labelPosition, setLabelPosition ] = useState('')
+	const [ fieldType, setFieldType ] = useState('')
 
 	const { id: formId } = match.params
 
@@ -48,7 +48,7 @@ const EditForm = ({ classes, match }) => {
 			formId,
 			createdBy: currentUser._id,
 		})
-		console.log(getForm)
+
 		dispatch({ type: 'GET_FORM', payload: getForm })
 		return getForm
 	}
@@ -66,9 +66,6 @@ const EditForm = ({ classes, match }) => {
 		const { addFormField } = await client.request(ADD_FIELD_MUTATION, {
 			formId,
 			label,
-			labelPosition,
-			formElement,
-			inputType,
 		})
 		dispatch({ type: 'UPDATE_FORM_FIELD', payload: addFormField })
 	}
@@ -76,108 +73,65 @@ const EditForm = ({ classes, match }) => {
 	return (
 		<div className={classes.root}>
 			<div className={classes.formArea}>
-				<Typography variant="h4">Inputs</Typography>
-				{console.log(currentForm)}
+				<Typography variant="h4">{currentForm && currentForm.title}</Typography>
 				{currentForm &&
 					currentForm.formFields.map((field, idx) => {
-						return <p key={idx}>{field.label}</p>
+						return <FormField key={idx} field={field} />
 					})}
 			</div>
 
 			{currentForm && (
 				<div className={classes.sidebar}>
-					<Typography variant="h4">Edit {currentForm.title}</Typography>
+					<Typography variant="h4">Edit </Typography>
+					<Typography onClick={() => setAdvancedControls(!advancedControls)}>
+						edit advanced
+					</Typography>
 					<TextField
 						placeholder="Title"
+						id="standard-name"
+						variant="outlined"
 						className={classes.textField}
 						margin="normal"
 						value={title}
 						onChange={e => setTitle(e.target.value)}
 					/>
-					<TextField
-						placeholder="Action"
-						className={classes.textField}
-						margin="normal"
-						value={action}
-						onChange={e => setAction(e.target.value)}
-					/>
-					<TextField
-						placeholder="Method"
-						className={classes.textField}
-						margin="normal"
-						value={method}
-						onChange={e => setMethod(e.target.value)}
-					/>
+					{advancedControls && (
+						<div>
+							<TextField
+								placeholder="Action"
+								className={classes.textField}
+								margin="normal"
+								value={action}
+								onChange={e => setAction(e.target.value)}
+							/>
+							<TextField
+								placeholder="Method"
+								className={classes.textField}
+								margin="normal"
+								value={method}
+								onChange={e => setMethod(e.target.value)}
+							/>
+						</div>
+					)}
+
 					<Button variant="outlined" onClick={() => handleUpdateForm()}>
 						Update Form
 					</Button>
 					<hr />
 					<Typography variant="h4">Add An Input</Typography>
-					<TextField
-						placeholder="Label"
-						className={classes.textField}
-						margin="normal"
-						value={label}
-						onChange={e => setLabel(e.target.value)}
-					/>
 					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="form-element">Select form element</InputLabel>
+						<InputLabel htmlFor="field-type">Select Type</InputLabel>
 						<Select
-							value={formElement}
-							onChange={e => setFormElement(e.target.value)}
+							value={fieldType}
+							onChange={e => setFieldType(e.target.value)}
 							inputProps={{
-								name: 'formElement',
-								id: 'form-element',
+								name: 'fieldType',
+								id: 'field-type',
 							}}>
 							<MenuItem value="">
 								<em>None</em>
 							</MenuItem>
-							{Object.values(FORM_ELEMENTS).map((input, idx) => {
-								return (
-									<MenuItem key={idx} value={input}>
-										{input}
-									</MenuItem>
-								)
-							})}
-						</Select>
-					</FormControl>
-					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="input-field">Select input type</InputLabel>
-						<Select
-							value={inputType}
-							onChange={e => setInputType(e.target.value)}
-							inputProps={{
-								name: 'inputType',
-								id: 'input-field',
-							}}>
-							<MenuItem value="">
-								<em>None</em>
-							</MenuItem>
-							{Object.values(INPUT_TYPES).map((input, idx) => {
-								return (
-									<MenuItem key={idx} value={input}>
-										{input}
-									</MenuItem>
-								)
-							})}
-						</Select>
-					</FormControl>
-
-					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="label-position">
-							Select label position
-						</InputLabel>
-						<Select
-							value={labelPosition}
-							onChange={e => setLabelPosition(e.target.value)}
-							inputProps={{
-								name: 'labelPosition',
-								id: 'label-position',
-							}}>
-							<MenuItem value="">
-								<em>None</em>
-							</MenuItem>
-							{Object.values(LABEL_POSITIONS).map((input, idx) => {
+							{Object.values(FIELD_TYPES).map((input, idx) => {
 								return (
 									<MenuItem key={idx} value={input}>
 										{input}
@@ -201,7 +155,7 @@ const styles = {
 		display: 'flex',
 		justifyContent: 'space-between',
 		flexDirection: 'row',
-		alignItems: 'center',
+		alignItems: 'flex-start',
 		boxSizing: 'border-box',
 	},
 	sidebar: {
