@@ -17,6 +17,13 @@ export const CREATE_FORM_MUTATION = `
   }
 `
 
+export const DELETE_FIELD_MUTATION = `
+  mutation($_id: ID!, $formId: ID!) {
+    deleteField(_id: $_id, formId: $formId) {
+      _id
+    }
+  }`
+
 export const UPDATE_FORM_MUTATION = `
   mutation($_id: ID!, $title: String!, $action: String, $method: String) {
     updateForm(_id: $_id, input: {
@@ -62,24 +69,20 @@ export const EDIT_FIELD_MUTATION = `
 
 export const ADD_FIELD_MUTATION = `
   mutation($formId: ID!, 
-    $type: FIELD_TYPES,
+    $type: String,
     $label: String, 
-    $labelPosition: LABEL_POSITIONS, 
-    $formElement: FORM_ELEMENTS, 
-    $inputType: INPUT_TYPES) {
+    $labelPosition: String) {
     addFormField(formId: $formId, input: {
       type: $type,
       label: $label,
-      labelPosition: $labelPosition,
-      formElement: $formElement,
-      inputType: $inputType
+      labelPosition: $labelPosition
     }) {
-      formFields {
-        type
-        label
-        labelPosition
-        formElement
-        inputType
+      _id
+      type
+      label
+      labelPosition
+      form {
+        _id
       }
     }
   }

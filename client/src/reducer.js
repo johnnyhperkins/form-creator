@@ -1,4 +1,6 @@
 export default function reducer(state, { type, payload }) {
+	console.log('before state:', state)
+	console.log('payload:', payload)
 	switch (type) {
 		case 'LOGIN_USER':
 			return {
@@ -21,18 +23,48 @@ export default function reducer(state, { type, payload }) {
 
 		case 'DELETE_FORM':
 			const deletedFormId = payload
-			const filteredForms = state.forms.filter(pin => pin._id !== deletedFormId)
+			const filteredForms = state.forms.filter(
+				form => form._id !== deletedFormId,
+			)
 			return {
 				...state,
 				forms: filteredForms,
 			}
-
+		case 'DELETE_FIELD':
+			const deletedFieldId = payload
+			const updatedFormFields = state.currentForm.formFields.filter(
+				field => field._id !== deletedFieldId,
+			)
+			return {
+				...state,
+				currentForm: {
+					...state.currentForm,
+					formFields: updatedFormFields,
+				},
+			}
 		case 'GET_FORM':
 			return {
 				...state,
 				currentForm: payload,
 			}
 
+		case 'UPDATE_FORM':
+			// for now the only form updates that can be done are changing the title
+			return {
+				...state,
+				currentForm: {
+					...state.currentForm,
+					title: payload.title,
+				},
+			}
+		case 'ADD_FORM_FIELD':
+			return {
+				...state,
+				currentForm: {
+					...state.currentForm,
+					formFields: [ ...state.currentForm.formFields, payload ],
+				},
+			}
 		case 'UPDATE_FORM_FIELD':
 			return {
 				...state,

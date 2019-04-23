@@ -14,15 +14,13 @@ import { GET_FORMS_QUERY } from '../graphql/queries'
 import { useClient } from '../client'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 
-// first want to check if user has forms,
-// if so list them otherwise only display the create new forms button
 const Home = ({ classes }) => {
 	const { state, dispatch } = useContext(Context)
 	const [ title, setTitle ] = useState('')
 	const client = useClient()
 
 	useEffect(() => {
-		getForms(state.currentUser._id)
+		getForms()
 	}, [])
 
 	const handleSubmit = async () => {
@@ -36,18 +34,38 @@ const Home = ({ classes }) => {
 		dispatch({ type: 'DELETE_FORM', payload: id })
 	}
 
-	const getForms = async createdBy => {
-		const { getForms } = await client.request(GET_FORMS_QUERY, { createdBy })
+	const getForms = async () => {
+		const { getForms } = await client.request(GET_FORMS_QUERY)
 		dispatch({ type: 'GET_FORMS', payload: getForms })
 	}
 
 	return (
 		<div className={classes.root}>
-			<form className={classes.form}>
-				<Typography variant="h2">Create A Form</Typography>
+			<div className={classes.formArea}>
+				{state.forms && (
+					<div>
+						<Typography variant="h4">My Forms</Typography>
+						{state.forms.map(form => {
+							return (
+								<div className={classes.formItem} key={form._id}>
+									<Typography variant="body1">
+										<Link to={`/form/${form._id}`}>{form.title}</Link>
+									</Typography>
+									<Button onClick={() => handleDeleteForm(form._id)}>
+										<DeleteIcon className={classes.deleteIcon} />
+									</Button>
+								</div>
+							)
+						})}
+					</div>
+				)}
+			</div>
+			<div className={classes.sidebar}>
+				<Typography variant="h4">Create A Form</Typography>
 				<TextField
 					required
-					label="Required"
+					label="Title"
+					variant="outlined"
 					placeholder="Name your form"
 					className={classes.textField}
 					margin="normal"
@@ -57,36 +75,31 @@ const Home = ({ classes }) => {
 				<Button variant="outlined" onClick={handleSubmit}>
 					Create New Form
 				</Button>
-			</form>
-			<hr />
-			{state.forms && (
-				<div>
-					<Typography variant="h4">My Forms</Typography>
-					{state.forms.map(form => {
-						return (
-							<div className={classes.formItem} key={form._id}>
-								<Typography variant="body1">
-									<Link to={`/form/${form._id}`}>{form.title}</Link>
-								</Typography>
-								<Button onClick={() => handleDeleteForm(form._id)}>
-									<DeleteIcon className={classes.deleteIcon} />
-								</Button>
-							</div>
-						)
-					})}
-				</div>
-			)}
+			</div>
 		</div>
 	)
 }
 
 const styles = {
 	root: {
-		height: '100vh',
+		padding: '0 50px',
 		display: 'flex',
-		justifyContent: 'center',
+		justifyContent: 'space-between',
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		boxSizing: 'border-box',
+		minHeight: '100vh',
+	},
+	sidebar: {
+		width: '30%',
+		borderLeft: '1px solid black',
+		padding: '25px',
+		display: 'flex',
 		flexDirection: 'column',
-		alignItems: 'center',
+	},
+	formArea: {
+		width: '60%',
+		padding: '25px',
 	},
 	textField: {
 		width: 200,

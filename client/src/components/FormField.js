@@ -5,26 +5,21 @@ import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Button from '@material-ui/core/Button'
 
-// import OutlinedInput from '@material-ui/core/OutlinedInput'
-
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
-// import FormHelperText from '@material-ui/core/FormHelperText'
+
 import FormControl from '@material-ui/core/FormControl'
-import {
-	FORM_ELEMENTS,
-	INPUT_TYPES,
-	LABEL_POSITIONS,
-	FIELD_TYPES,
-} from '../constants'
+import { LABEL_POSITIONS } from '../constants'
 import Select from '@material-ui/core/Select'
 
-import { GET_FORM_QUERY } from '../graphql/queries'
-import { EDIT_FIELD_MUTATION } from '../graphql/mutations'
+import {
+	EDIT_FIELD_MUTATION,
+	DELETE_FIELD_MUTATION,
+} from '../graphql/mutations'
 import Context from '../context'
 import { useClient } from '../client'
 
-const FormField = ({ classes, field, match, idx }) => {
+const FormField = ({ classes, field, match }) => {
 	const { state, dispatch } = useContext(Context)
 	// const [ type, setType ] = useState(field.type || '')
 	const { id: formId } = match.params
@@ -42,7 +37,6 @@ const FormField = ({ classes, field, match, idx }) => {
 	const handleUpdateFormField = async () => {
 		const { editFormField } = await client.request(EDIT_FIELD_MUTATION, {
 			formId,
-			idx,
 			type: field.type,
 			label,
 			labelPosition,
@@ -52,15 +46,35 @@ const FormField = ({ classes, field, match, idx }) => {
 		dispatch({ type: 'UPDATE_FORM_FIELD', payload: editFormField })
 	}
 
+	const deleteField = async _id => {
+		await client.request(DELETE_FIELD_MUTATION, {
+			_id,
+			formId,
+		})
+		dispatch({ type: 'DELETE_FIELD', payload: _id })
+	}
+
 	return (
 		<div>
 			<div className={classes.formField}>
 				{field.label || `New ${field.type} Field`}{' '}
-				<span onClick={() => setEditField(!editField)}>edit</span>
+				<Button
+					variant="outlined"
+					className={classes.inline}
+					onClick={() => setEditField(!editField)}>
+					edit
+				</Button>{' '}
+				<Button
+					variant="text"
+					className={classes.inline}
+					onClick={() => deleteField(field._id)}>
+					delete
+				</Button>
 			</div>
 
 			{editField && (
 				<div>
+					{/* LABEL */}
 					<TextField
 						placeholder="Label"
 						className={classes.textField}
@@ -68,48 +82,8 @@ const FormField = ({ classes, field, match, idx }) => {
 						value={label}
 						onChange={e => setLabel(e.target.value)}
 					/>
-					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="form-element">Select form element</InputLabel>
-						<Select
-							value={formElement}
-							onChange={e => setFormElement(e.target.value)}
-							inputProps={{
-								name: 'formElement',
-								id: 'form-element',
-							}}>
-							<MenuItem value="">
-								<em>None</em>
-							</MenuItem>
-							{Object.values(FORM_ELEMENTS).map((input, idx) => {
-								return (
-									<MenuItem key={idx} value={input}>
-										{input}
-									</MenuItem>
-								)
-							})}
-						</Select>
-					</FormControl>
-					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="input-field">Select input type</InputLabel>
-						<Select
-							value={inputType}
-							onChange={e => setInputType(e.target.value)}
-							inputProps={{
-								name: 'inputType',
-								id: 'input-field',
-							}}>
-							<MenuItem value="">
-								<em>None</em>
-							</MenuItem>
-							{Object.values(INPUT_TYPES).map((input, idx) => {
-								return (
-									<MenuItem key={idx} value={input}>
-										{input}
-									</MenuItem>
-								)
-							})}
-						</Select>
-					</FormControl>
+
+					{/* LABEL POSITION */}
 
 					<FormControl className={classes.formControl}>
 						<InputLabel htmlFor="label-position">
@@ -142,7 +116,8 @@ const FormField = ({ classes, field, match, idx }) => {
 
 const styles = {
 	formField: {
-		width: 100,
+		width: '100%',
+		marginBottom: 15,
 	},
 	root: {
 		padding: '0 50px',
@@ -151,6 +126,9 @@ const styles = {
 		flexDirection: 'row',
 		alignItems: 'center',
 		boxSizing: 'border-box',
+	},
+	inline: {
+		display: 'inline',
 	},
 	sidebar: {
 		width: '30%',

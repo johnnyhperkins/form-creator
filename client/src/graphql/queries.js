@@ -7,8 +7,8 @@ export const ME_QUERY = `query{
   }
 }`
 
-export const GET_FORMS_QUERY = `query($createdBy: ID!) {
-  getForms(createdBy: $createdBy) {
+export const GET_FORMS_QUERY = `query {
+  getForms {
     _id
     title
     createdBy {
@@ -18,21 +18,17 @@ export const GET_FORMS_QUERY = `query($createdBy: ID!) {
   }
 }`
 
-export const GET_FORM_QUERY = `query($formId: ID!, $createdBy: ID) {
-  getForm(formId: $formId, createdBy: $createdBy) {
+export const GET_FORM_QUERY = `query($_id: ID!) {
+  getForm(_id: $_id) {
     _id
     title
     action
     method
     formFields {
+      _id
+      type
       label
       labelPosition
-      formElement
-      inputType
-      attributes {
-        attr
-        value
-      }
     }
     createdBy {
       _id

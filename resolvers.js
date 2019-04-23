@@ -1,5 +1,6 @@
 const { AuthenticationError } = require('apollo-server')
 const Form = require('./models/Form')
+const FormField = require('./models/FormField')
 const ObjectId = require('mongoose').Types.ObjectId
 
 const authenticated = next => (root, args, ctx, info) => {
@@ -12,22 +13,29 @@ const authenticated = next => (root, args, ctx, info) => {
 module.exports = {
 	Query: {
 		me: authenticated((root, args, ctx) => ctx.currentUser),
-		async getForms(root, { createdBy }) {
-			const forms = await Form.find({
-				createdBy: new ObjectId(createdBy),
-			}).populate('createdBy')
+		getForms: authenticated(async (root, args, ctx) => {
+			const forms = await Form.find(
+				{
+					createdBy: ctx.currentUser._id,
+				},
+				err => {
+					console.log(err)
+				},
+			).populate('createdBy')
 			return forms
-		},
-		async getForm(root, { formId, createdBy }) {
-			const form = await Form.findById(formId).populate('createdBy')
+		}),
 
-			if (String(form.createdBy._id) !== createdBy) {
-				throw new AuthenticationError(
-					'You do not have permission to edit this form',
-				)
-			}
+		getForm: authenticated(async (root, { _id }, ctx) => {
+			const form = await Form.findOne(
+				{ _id, createdBy: ctx.currentUser._id },
+				err => {
+					console.log(err)
+				},
+			)
+				.populate('createdBy')
+				.populate('formFields')
 			return form
-		},
+		}),
 	},
 	Mutation: {
 		createForm: authenticated(async (root, args, ctx) => {
@@ -38,13 +46,16 @@ module.exports = {
 			const formAdded = await Form.populate(newForm, 'createdBy')
 			return formAdded
 		}),
-		deleteForm: authenticated(async (root, args) => {
+		deleteForm: authenticated(async (root, { formId }, ctx) => {
 			const formDeleted = await Form.findOneAndDelete({
-				_id: args.formId,
+				_id: formId,
 			}).exec()
+			await FormField.deleteMany({
+				form: formId,
+			})
 			return formDeleted
 		}),
-		async updateForm(root, { _id, input }) {
+		updateForm: authenticated(async (root, { _id, input }) => {
 			return await Form.findOneAndUpdate(
 				{
 					_id,
@@ -54,18 +65,30 @@ module.exports = {
 					new: true,
 				},
 			)
+		}),
+		async deleteField(root, { _id, formId }) {
+			await FormField.findByIdAndRemove(_id)
+			await Form.findOneAndUpdate(
+				{ _id: formId },
+				{ $pull: { formFields: _id } },
+				{ new: true },
+			)
 		},
-		async editFormField(root, { formId, idx, input }) {},
-		async addFormFieldAttribute(root, { formId, input }) {},
 		async addFormField(root, { formId, input }) {
-			const form = await Form.findOneAndUpdate(
+			const formField = await new FormField({
+				...input,
+				form: new ObjectId(formId),
+			}).save()
+
+			await Form.findOneAndUpdate(
 				{
 					_id: formId,
 				},
-				{ $push: { formFields: input } },
+				{ $push: { formFields: formField._id } },
 				{ new: true },
 			)
-			return form
+
+			return formField
 		},
 	},
 }
