@@ -1,30 +1,43 @@
 import React, { useState, useContext, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+
+import styled from 'styled-components'
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Button from '@material-ui/core/Button'
-
-// import OutlinedInput from '@material-ui/core/OutlinedInput'
-
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
-
 import FormControl from '@material-ui/core/FormControl'
-import { FIELD_TYPES } from '../constants'
 import Select from '@material-ui/core/Select'
 
+import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
 import { GET_FORM_QUERY } from '../graphql/queries'
-import { UPDATE_FORM_MUTATION, ADD_FIELD_MUTATION } from '../graphql/mutations'
+import {
+	UPDATE_FORM_MUTATION,
+	ADD_FIELD_MUTATION,
+	EDIT_FIELD_MUTATION,
+	UPDATE_FORMFIELD_ORDER,
+	DELETE_FIELD_MUTATION,
+} from '../graphql/mutations'
 import Context from '../context'
 import { useClient } from '../client'
 
+const FieldContainer = styled.div`
+	width: 60%;
+	border: 1px solid #ccc;
+	padding: 10px;
+	margin-bottom: 10px;
+`
+
 const EditForm = ({ classes, match }) => {
 	const { state, dispatch } = useContext(Context)
-	const { currentForm, currentUser } = state
+	const { currentForm } = state
 
 	const [ title, setTitle ] = useState('')
+	const [ fields, setFields ] = useState([])
 
 	const [ label, setLabel ] = useState('')
 	const [ type, setType ] = useState('')
@@ -36,6 +49,7 @@ const EditForm = ({ classes, match }) => {
 	useEffect(() => {
 		getForm().then(form => {
 			setTitle(form.title)
+			setFields(form.formFields)
 		})
 	}, [])
 
@@ -44,7 +58,7 @@ const EditForm = ({ classes, match }) => {
 			_id: formId,
 		})
 
-		dispatch({ type: 'GET_FORM', payload: getForm })
+		await dispatch({ type: 'GET_FORM', payload: getForm })
 		return getForm
 	}
 
@@ -56,29 +70,90 @@ const EditForm = ({ classes, match }) => {
 		dispatch({ type: 'UPDATE_FORM', payload: updateForm })
 	}
 
+	const reorder = (list, startIndex, endIndex) => {
+		const result = Array.from(list)
+		const [ removed ] = result.splice(startIndex, 1)
+		result.splice(endIndex, 0, removed)
+
+		return result
+	}
+
 	const handleAddFormField = async () => {
 		const { addFormField } = await client.request(ADD_FIELD_MUTATION, {
 			formId,
 			type,
 			label,
 		})
-
-		dispatch({ type: 'ADD_FORM_FIELD', payload: addFormField })
+		setFields([ ...fields, addFormField ])
 		setLabel('')
 		setType('')
 	}
 
-	return (
-		<div className={classes.root}>
-			<div className={classes.formArea}>
-				<Typography variant="h4">{currentForm && currentForm.title}</Typography>
-				{currentForm &&
-					currentForm.formFields.map((field, idx) => {
-						return <FormField key={idx} field={field} />
-					})}
-			</div>
+	const deleteField = async _id => {
+		await client.request(DELETE_FIELD_MUTATION, {
+			_id,
+			formId,
+		})
+		setFields(fields.filter(field => field._id !== _id))
+	}
 
-			{currentForm && (
+	const onDragEnd = async result => {
+		const { destination, source } = result
+
+		if (
+			!destination ||
+			(destination.droppableId === source.droppableId &&
+				destination.index === source.index)
+		)
+			return
+
+		const newFields = reorder(
+			fields,
+			result.source.index,
+			result.destination.index,
+		)
+		setFields(newFields)
+		const fieldIds = newFields.map(field => field._id)
+		await client.request(UPDATE_FORMFIELD_ORDER, {
+			_id: formId,
+			formFields: fieldIds,
+		})
+	}
+
+	return (
+		currentForm && (
+			<div className={classes.root}>
+				<div className={classes.formArea}>
+					<Typography variant="h4">{currentForm.title}</Typography>
+					<DragDropContext onDragEnd={onDragEnd}>
+						<Droppable droppableId={currentForm._id}>
+							{provided => (
+								<FieldContainer
+									ref={provided.innerRef}
+									{...provided.droppableProps}>
+									{fields.map((field, idx) => {
+										return (
+											<Draggable
+												draggableId={field._id}
+												key={field._id}
+												index={idx}>
+												{provided => (
+													<FormField
+														deleteField={deleteField}
+														field={field}
+														provided={provided}
+													/>
+												)}
+											</Draggable>
+										)
+									})}
+									{provided.placeholder}
+								</FieldContainer>
+							)}
+						</Droppable>
+					</DragDropContext>
+				</div>
+
 				<div className={classes.sidebar}>
 					<Typography variant="h4">Edit </Typography>
 					<TextField
@@ -138,8 +213,8 @@ const EditForm = ({ classes, match }) => {
 						Add Field
 					</Button>
 				</div>
-			)}
-		</div>
+			</div>
+		)
 	)
 }
 

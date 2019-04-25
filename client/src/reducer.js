@@ -1,6 +1,6 @@
 export default function reducer(state, { type, payload }) {
-	console.log('before state:', state)
-	console.log('payload:', payload)
+	// console.log('before state:', state)
+	// console.log('payload:', payload)
 	switch (type) {
 		case 'LOGIN_USER':
 			return {
@@ -32,20 +32,27 @@ export default function reducer(state, { type, payload }) {
 			}
 		case 'DELETE_FIELD':
 			const deletedFieldId = payload
-			const updatedFormFields = state.currentForm.formFields.filter(
+			debugger
+			const updatedFormFields = state.currentFormFields.filter(
 				field => field._id !== deletedFieldId,
 			)
 			return {
 				...state,
 				currentForm: {
 					...state.currentForm,
-					formFields: updatedFormFields,
+					formFields: [ updatedFormFields ],
 				},
 			}
 		case 'GET_FORM':
+			const { _id, createdBy, title, formFields } = payload
 			return {
 				...state,
-				currentForm: payload,
+				currentForm: {
+					_id,
+					createdBy,
+					title,
+				},
+				currentFormFields: formFields,
 			}
 
 		case 'UPDATE_FORM':
@@ -58,21 +65,24 @@ export default function reducer(state, { type, payload }) {
 				},
 			}
 		case 'ADD_FORM_FIELD':
+			// debugger
 			return {
 				...state,
 				currentForm: {
 					...state.currentForm,
-					formFields: [ ...state.currentForm.formFields, payload ],
+					formFields: [ ...state.currentFormFields, payload ],
 				},
 			}
 		case 'UPDATE_FORM_FIELD':
-			return {
-				...state,
-				currentForm: {
-					...state.currentForm,
-					...payload,
-				},
-			}
+			return state
+		// To Do: Implement update
+		// return {
+		// 	...state,
+		// 	currentFormFields: {
+		// 		...state.currentForm,
+		// 		...payload,
+		// 	},
+		// }
 		case 'CREATE_FORM':
 			const newForm = payload
 			const prevForms = state.forms.filter(form => form._id !== newForm._id)

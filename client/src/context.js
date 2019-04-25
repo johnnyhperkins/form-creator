@@ -5,6 +5,7 @@ const Context = createContext({
 	isAuth: false,
 	forms: [],
 	currentForm: null,
+	currentFormFields: [],
 })
 
 export default Context

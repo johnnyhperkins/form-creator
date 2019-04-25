@@ -43,6 +43,14 @@ export const UPDATE_FORM_MUTATION = `
   }
 `
 
+export const UPDATE_FORMFIELD_ORDER = `
+  mutation($_id: ID!, $formFields: [ID!]!) {
+    updateFormFieldOrder(_id: $_id, formFields: $formFields) {
+      _id
+    }
+  }
+`
+
 export const EDIT_FIELD_MUTATION = `
   mutation($formId: ID!, $idx: Int,
     $type: FIELD_TYPES,

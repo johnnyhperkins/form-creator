@@ -1,20 +1,24 @@
 import React, { useState, useContext, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, withRouter } from 'react-router-dom'
+
 import { withStyles } from '@material-ui/core/styles'
-import Context from '../context'
 import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemText from '@material-ui/core/ListItemText'
+
+import Context from '../context'
 import {
 	CREATE_FORM_MUTATION,
 	DELETE_FORM_MUTATION,
 } from '../graphql/mutations'
 import { GET_FORMS_QUERY } from '../graphql/queries'
-// import { Query } from "react-apollo";
 import { useClient } from '../client'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 
-const Home = ({ classes }) => {
+const Home = ({ classes, history }) => {
 	const { state, dispatch } = useContext(Context)
 	const [ title, setTitle ] = useState('')
 	const client = useClient()
@@ -27,6 +31,10 @@ const Home = ({ classes }) => {
 		const { createForm } = await client.request(CREATE_FORM_MUTATION, { title })
 		dispatch({ type: 'CREATE_FORM', payload: createForm })
 		setTitle('')
+	}
+
+	const handleClick = id => {
+		history.push(`/form/${id}`)
 	}
 
 	const handleDeleteForm = async id => {
@@ -45,18 +53,22 @@ const Home = ({ classes }) => {
 				{state.forms && (
 					<div>
 						<Typography variant="h4">My Forms</Typography>
-						{state.forms.map(form => {
-							return (
-								<div className={classes.formItem} key={form._id}>
-									<Typography variant="body1">
-										<Link to={`/form/${form._id}`}>{form.title}</Link>
-									</Typography>
-									<Button onClick={() => handleDeleteForm(form._id)}>
-										<DeleteIcon className={classes.deleteIcon} />
-									</Button>
-								</div>
-							)
-						})}
+						<List>
+							{state.forms.map(form => {
+								return (
+									<ListItem className={classes.formItem} key={form._id}>
+										<ListItemText
+											className={classes.pointer}
+											onClick={() => handleClick(form._id)}
+											primary={form.title}
+										/>
+										<Button onClick={() => handleDeleteForm(form._id)}>
+											<DeleteIcon className={classes.deleteIcon} />
+										</Button>
+									</ListItem>
+								)
+							})}
+						</List>
 					</div>
 				)}
 			</div>
@@ -134,7 +146,9 @@ const styles = {
 		width: 200,
 		objectFit: 'cover',
 	},
-
+	pointer: {
+		cursor: 'pointer',
+	},
 	popupTab: {
 		display: 'flex',
 		alignItems: 'center',
@@ -143,4 +157,4 @@ const styles = {
 	},
 }
 
-export default withStyles(styles)(Home)
+export default withRouter(withStyles(styles)(Home))

@@ -7,6 +7,7 @@ import Button from '@material-ui/core/Button'
 
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
+import styled from 'styled-components'
 
 import FormControl from '@material-ui/core/FormControl'
 import { LABEL_POSITIONS } from '../constants'
@@ -19,9 +20,10 @@ import {
 import Context from '../context'
 import { useClient } from '../client'
 
-const FormField = ({ classes, field, match }) => {
+const Field = styled.div``
+
+const FormField = ({ classes, field, match, provided, deleteField }) => {
 	const { state, dispatch } = useContext(Context)
-	// const [ type, setType ] = useState(field.type || '')
 	const { id: formId } = match.params
 	const [ labelPosition, setLabelPosition ] = useState(
 		field.labelPosition || '',
@@ -46,16 +48,12 @@ const FormField = ({ classes, field, match }) => {
 		dispatch({ type: 'UPDATE_FORM_FIELD', payload: editFormField })
 	}
 
-	const deleteField = async _id => {
-		await client.request(DELETE_FIELD_MUTATION, {
-			_id,
-			formId,
-		})
-		dispatch({ type: 'DELETE_FIELD', payload: _id })
-	}
-
 	return (
-		<div>
+		<Field
+			className={classes.formFieldContainer}
+			{...provided.draggableProps}
+			{...provided.dragHandleProps}
+			ref={provided.innerRef}>
 			<div className={classes.formField}>
 				{field.label || `New ${field.type} Field`}{' '}
 				<Button
@@ -71,7 +69,6 @@ const FormField = ({ classes, field, match }) => {
 					delete
 				</Button>
 			</div>
-
 			{editField && (
 				<div>
 					{/* LABEL */}
@@ -110,7 +107,7 @@ const FormField = ({ classes, field, match }) => {
 					</FormControl>
 				</div>
 			)}
-		</div>
+		</Field>
 	)
 }
 
