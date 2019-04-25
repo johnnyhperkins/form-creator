@@ -32,7 +32,6 @@ export default function reducer(state, { type, payload }) {
 			}
 		case 'DELETE_FIELD':
 			const deletedFieldId = payload
-			debugger
 			const updatedFormFields = state.currentFormFields.filter(
 				field => field._id !== deletedFieldId,
 			)

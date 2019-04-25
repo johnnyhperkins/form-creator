@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
@@ -11,6 +11,9 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
+import Snackbar from '@material-ui/core/Snackbar'
+import IconButton from '@material-ui/core/IconButton'
+import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 
 import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
@@ -22,52 +25,51 @@ import {
 	UPDATE_FORMFIELD_ORDER,
 	DELETE_FIELD_MUTATION,
 } from '../graphql/mutations'
-import Context from '../context'
+
 import { useClient } from '../client'
 
 const FieldContainer = styled.div`
-	width: 60%;
-	border: 1px solid #ccc;
 	padding: 10px;
 	margin-bottom: 10px;
 `
 
 const EditForm = ({ classes, match }) => {
-	const { state, dispatch } = useContext(Context)
-	const { currentForm } = state
-
 	const [ title, setTitle ] = useState('')
-	const [ fields, setFields ] = useState([])
-
+	const [ currentForm, setCurrentForm ] = useState(null)
 	const [ label, setLabel ] = useState('')
 	const [ type, setType ] = useState('')
+	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 
 	const { id: formId } = match.params
 
 	const client = useClient()
 
 	useEffect(() => {
-		getForm().then(form => {
-			setTitle(form.title)
-			setFields(form.formFields)
-		})
+		getForm()
 	}, [])
 
 	const getForm = async () => {
 		const { getForm } = await client.request(GET_FORM_QUERY, {
 			_id: formId,
 		})
+		setTitle(getForm.title)
+		setCurrentForm(getForm)
+	}
 
-		await dispatch({ type: 'GET_FORM', payload: getForm })
-		return getForm
+	const handleClose = (event, reason) => {
+		if (reason === 'clickaway') {
+			return
+		}
+
+		setSnackBar({ ...snackBar, open: false })
 	}
 
 	const handleUpdateForm = async () => {
-		const { updateForm } = await client.request(UPDATE_FORM_MUTATION, {
+		await client.request(UPDATE_FORM_MUTATION, {
 			_id: formId,
 			title,
 		})
-		dispatch({ type: 'UPDATE_FORM', payload: updateForm })
+		setSnackBar({ open: true, message: 'Saved' })
 	}
 
 	const reorder = (list, startIndex, endIndex) => {
@@ -84,7 +86,12 @@ const EditForm = ({ classes, match }) => {
 			type,
 			label,
 		})
-		setFields([ ...fields, addFormField ])
+
+		setSnackBar({ open: true, message: 'Field added' })
+		setCurrentForm({
+			...currentForm,
+			formFields: [ ...currentForm.formFields, addFormField ],
+		})
 		setLabel('')
 		setType('')
 	}
@@ -94,7 +101,14 @@ const EditForm = ({ classes, match }) => {
 			_id,
 			formId,
 		})
-		setFields(fields.filter(field => field._id !== _id))
+		setSnackBar({
+			open: true,
+			message: 'Field Deleted',
+		})
+		setCurrentForm({
+			...currentForm,
+			formFields: currentForm.formFields.filter(field => field._id !== _id),
+		})
 	}
 
 	const onDragEnd = async result => {
@@ -108,11 +122,16 @@ const EditForm = ({ classes, match }) => {
 			return
 
 		const newFields = reorder(
-			fields,
+			currentForm.formFields,
 			result.source.index,
 			result.destination.index,
 		)
-		setFields(newFields)
+		setSnackBar({ open: true, message: 'Updated' })
+		setCurrentForm({
+			...currentForm,
+			formFields: newFields,
+		})
+
 		const fieldIds = newFields.map(field => field._id)
 		await client.request(UPDATE_FORMFIELD_ORDER, {
 			_id: formId,
@@ -124,38 +143,46 @@ const EditForm = ({ classes, match }) => {
 		currentForm && (
 			<div className={classes.root}>
 				<div className={classes.formArea}>
-					<Typography variant="h4">{currentForm.title}</Typography>
-					<DragDropContext onDragEnd={onDragEnd}>
-						<Droppable droppableId={currentForm._id}>
-							{provided => (
-								<FieldContainer
-									ref={provided.innerRef}
-									{...provided.droppableProps}>
-									{fields.map((field, idx) => {
-										return (
-											<Draggable
-												draggableId={field._id}
-												key={field._id}
-												index={idx}>
-												{provided => (
-													<FormField
-														deleteField={deleteField}
-														field={field}
-														provided={provided}
-													/>
-												)}
-											</Draggable>
-										)
-									})}
-									{provided.placeholder}
-								</FieldContainer>
-							)}
-						</Droppable>
-					</DragDropContext>
+					<Typography variant="h4">{title}</Typography>
+					{currentForm.formFields.length ? (
+						<DragDropContext onDragEnd={onDragEnd}>
+							<Droppable droppableId={currentForm._id}>
+								{provided => (
+									<FieldContainer
+										ref={provided.innerRef}
+										{...provided.droppableProps}>
+										{currentForm.formFields.map((field, idx) => {
+											return (
+												<Draggable
+													draggableId={field._id}
+													key={field._id}
+													index={idx}>
+													{provided => (
+														<FormField
+															deleteField={deleteField}
+															field={field}
+															provided={provided}
+														/>
+													)}
+												</Draggable>
+											)
+										})}
+										{provided.placeholder}
+									</FieldContainer>
+								)}
+							</Droppable>
+						</DragDropContext>
+					) : (
+						<div className={classes.emptyFieldsWrapper}>
+							<Typography variant="h5" className={classes.emptyFieldsText}>
+								Add fields in the sidebar
+							</Typography>
+						</div>
+					)}
 				</div>
 
 				<div className={classes.sidebar}>
-					<Typography variant="h4">Edit </Typography>
+					<Typography variant="h4">Edit</Typography>
 					<TextField
 						placeholder="Title"
 						label="Title"
@@ -213,6 +240,34 @@ const EditForm = ({ classes, match }) => {
 						Add Field
 					</Button>
 				</div>
+				<Snackbar
+					anchorOrigin={{
+						vertical: 'bottom',
+						horizontal: 'left',
+					}}
+					className={classes.success}
+					open={snackBar.open}
+					autoHideDuration={2000}
+					onClose={handleClose}
+					ContentProps={{
+						'aria-describedby': 'message-id',
+					}}
+					message={
+						<span id="message-id" className={classes.snackbarMessage}>
+							{snackBar.message}
+						</span>
+					}
+					action={[
+						<IconButton
+							key="close"
+							aria-label="Close"
+							color="inherit"
+							className={classes.close}
+							onClick={handleClose}>
+							<CheckCircleIcon />
+						</IconButton>,
+					]}
+				/>
 			</div>
 		)
 	)
@@ -226,6 +281,20 @@ const styles = {
 		flexDirection: 'row',
 		alignItems: 'flex-start',
 		boxSizing: 'border-box',
+	},
+	emptyFieldsText: {
+		fontSize: '24px',
+		color: '#ddd',
+	},
+	emptyFieldsWrapper: {
+		height: '100vh',
+		display: 'flex',
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	snackbarMessage: {
+		textTransform: 'uppercase',
+		fontWeight: 'bold',
 	},
 	sidebar: {
 		width: '30%',
@@ -277,7 +346,6 @@ const styles = {
 		width: 200,
 		objectFit: 'cover',
 	},
-
 	popupTab: {
 		display: 'flex',
 		alignItems: 'center',
