@@ -14,7 +14,7 @@ module.exports = gql`
 		title: String!
 		action: String
 		method: String
-		formFields: [FormField!]!
+		formFields: [FormField!]
 	}
 
 	type FormField {
@@ -22,7 +22,6 @@ module.exports = gql`
 		type: String
 		label: String
 		labelPosition: String
-		# order: Int
 		form: Form
 	}
 
@@ -42,7 +41,6 @@ module.exports = gql`
 		type: String
 		label: String
 		labelPosition: String
-		# order: Int
 	}
 
 	type Mutation {
@@ -51,6 +49,7 @@ module.exports = gql`
 		updateForm(_id: ID!, input: FormInput): Form
 		addFormField(formId: ID!, input: FormFieldInput): FormField
 		deleteField(_id: ID!, formId: ID!): FormField
+		updateFormFieldOrder(_id: ID!, formFields: [ID!]!): Form
 		# editFormField(formId: ID!, idx: Int, input: FormFieldInput): Form
 	}
 `

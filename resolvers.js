@@ -90,5 +90,16 @@ module.exports = {
 
 			return formField
 		},
+		async updateFormFieldOrder(root, { _id, formFields }) {
+			await Form.findOneAndUpdate(
+				{
+					_id,
+				},
+				{
+					formFields,
+				},
+				err => console.log(err),
+			)
+		},
 	},
 }
