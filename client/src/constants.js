@@ -52,16 +52,9 @@ const INPUT_TYPES = {
 	WEEK: 'WEEK',
 }
 
-const LABEL_POSITIONS = {
-	BOTTOM: 'BOTTOM',
-	INLINE: 'INLINE',
-	TOP: 'TOP',
-}
-
 module.exports = {
 	FORM_ELEMENTS,
 	ATTRIBUTES,
 	INPUT_TYPES,
-	LABEL_POSITIONS,
 	FIELD_TYPES,
 }

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react'
-import { Link, withRouter } from 'react-router-dom'
+import { withRouter } from 'react-router-dom'
 
 import { withStyles } from '@material-ui/core/styles'
 import Button from '@material-ui/core/Button'
@@ -8,6 +8,7 @@ import TextField from '@material-ui/core/TextField'
 import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
+import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 
 import Context from '../context'
 import {
@@ -16,7 +17,6 @@ import {
 } from '../graphql/mutations'
 import { GET_FORMS_QUERY } from '../graphql/queries'
 import { useClient } from '../client'
-import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 
 const Home = ({ classes, history }) => {
 	const { state, dispatch } = useContext(Context)

@@ -1,51 +1,58 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState } from 'react'
 import { withRouter } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
-import Typography from '@material-ui/core/Typography'
+// import Typography from '@material-ui/core/Typography'
+import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
+import EditIcon from '@material-ui/icons/Edit'
+import DehazeIcon from '@material-ui/icons/Dehaze'
 import Button from '@material-ui/core/Button'
-
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
+import FormControl from '@material-ui/core/FormControl'
+import Select from '@material-ui/core/Select'
 import styled from 'styled-components'
 
-import FormControl from '@material-ui/core/FormControl'
-import { LABEL_POSITIONS } from '../constants'
-import Select from '@material-ui/core/Select'
-
-import {
-	EDIT_FIELD_MUTATION,
-	DELETE_FIELD_MUTATION,
-} from '../graphql/mutations'
-import Context from '../context'
-import { useClient } from '../client'
+import { FIELD_TYPES } from '../constants'
 
 const Field = styled.div``
 
-const FormField = ({ classes, field, match, provided, deleteField }) => {
-	const { state, dispatch } = useContext(Context)
-	const { id: formId } = match.params
-	const [ labelPosition, setLabelPosition ] = useState(
-		field.labelPosition || '',
-	)
-	const [ formElement, setFormElement ] = useState(field.formElement || '')
+const FormField = ({ classes, field, provided, deleteField, updateField }) => {
 	const [ label, setLabel ] = useState('')
+	const [ type, setType ] = useState('')
 	const [ editField, setEditField ] = useState(false)
 
-	const [ inputType, setInputType ] = useState(field.inputType || '')
+	const renderField = field => {
+		switch (field.type) {
+			case 'Text':
+				return (
+					<TextField disabled={true} variant="outlined" label={field.label} />
+				)
+			case 'Text Area':
+				return (
+					<TextField
+						disabled={true}
+						multiline={true}
+						variant="outlined"
+						label={field.label}
+					/>
+				)
+			case 'Button':
+				return (
+					<Button disabled variant="outlined">
+						{field.label}
+					</Button>
+				)
+			default:
+				return null
+		}
+	}
 
-	const client = useClient()
+	const handleUpdateField = () => {
+		setEditField(false)
 
-	const handleUpdateFormField = async () => {
-		const { editFormField } = await client.request(EDIT_FIELD_MUTATION, {
-			formId,
-			type: field.type,
-			label,
-			labelPosition,
-			formElement,
-			inputType,
-		})
-		dispatch({ type: 'UPDATE_FORM_FIELD', payload: editFormField })
+		const newType = type === '' ? field.type : type
+		updateField({ _id: field._id, type: newType, label })
 	}
 
 	return (
@@ -54,21 +61,22 @@ const FormField = ({ classes, field, match, provided, deleteField }) => {
 			{...provided.draggableProps}
 			{...provided.dragHandleProps}
 			ref={provided.innerRef}>
-			<div className={classes.formField}>
-				{field.label || `New ${field.type} Field`}{' '}
-				<Button
-					variant="outlined"
-					className={classes.inline}
-					onClick={() => setEditField(!editField)}>
-					edit
-				</Button>{' '}
-				<Button
-					variant="text"
-					className={classes.inline}
-					onClick={() => deleteField(field._id)}>
-					delete
-				</Button>
+			<div className={classes.formFieldWrapper}>
+				<div className={classes.centerFlex}>
+					<DehazeIcon className={classes.editIcon} /> {renderField(field)}
+				</div>
+				<div>
+					<EditIcon
+						onClick={() => setEditField(!editField)}
+						className={classes.editIcon}
+					/>{' '}
+					<DeleteIcon
+						onClick={() => deleteField(field._id)}
+						className={classes.deleteIcon}
+					/>
+				</div>
 			</div>
+
 			{editField && (
 				<div>
 					{/* LABEL */}
@@ -80,23 +88,23 @@ const FormField = ({ classes, field, match, provided, deleteField }) => {
 						onChange={e => setLabel(e.target.value)}
 					/>
 
-					{/* LABEL POSITION */}
+					{/* TYPE */}
 
 					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="label-position">
-							Select label position
-						</InputLabel>
+						<InputLabel htmlFor="field-type">Select Type</InputLabel>
 						<Select
-							value={labelPosition}
-							onChange={e => setLabelPosition(e.target.value)}
+							value={type}
+							label="Type"
+							variant="outlined"
+							onChange={e => setType(e.target.value)}
 							inputProps={{
-								name: 'labelPosition',
-								id: 'label-position',
+								name: 'type',
+								id: 'field-type',
 							}}>
 							<MenuItem value="">
-								<em>None</em>
+								<em>Select</em>
 							</MenuItem>
-							{Object.values(LABEL_POSITIONS).map((input, idx) => {
+							{Object.values(FIELD_TYPES).map((input, idx) => {
 								return (
 									<MenuItem key={idx} value={input}>
 										{input}
@@ -105,17 +113,18 @@ const FormField = ({ classes, field, match, provided, deleteField }) => {
 							})}
 						</Select>
 					</FormControl>
+
+					<Button variant="outlined" onClick={handleUpdateField}>
+						Update
+					</Button>
 				</div>
 			)}
+			{/* Close Edit Field */}
 		</Field>
 	)
 }
 
 const styles = {
-	formField: {
-		width: '100%',
-		marginBottom: 15,
-	},
 	root: {
 		padding: '0 50px',
 		display: 'flex',
@@ -123,6 +132,16 @@ const styles = {
 		flexDirection: 'row',
 		alignItems: 'center',
 		boxSizing: 'border-box',
+	},
+	centerFlex: {
+		display: 'flex',
+		alignItems: 'center',
+	},
+	formFieldWrapper: {
+		width: '100%',
+		margin: '15px 0',
+		display: 'flex',
+		justifyContent: 'space-between',
 	},
 	inline: {
 		display: 'inline',
@@ -141,8 +160,14 @@ const styles = {
 	textField: {
 		width: 200,
 	},
+	editIcon: {
+		color: '#ccc',
+		cursor: 'pointer',
+		marginRight: 15,
+	},
 	deleteIcon: {
 		color: 'red',
+		cursor: 'pointer',
 	},
 	form: {
 		display: 'flex',
@@ -174,7 +199,6 @@ const styles = {
 		width: 200,
 		objectFit: 'cover',
 	},
-
 	popupTab: {
 		display: 'flex',
 		alignItems: 'center',

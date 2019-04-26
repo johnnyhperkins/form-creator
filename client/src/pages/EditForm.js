@@ -14,6 +14,7 @@ import Select from '@material-ui/core/Select'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+import Divider from '@material-ui/core/Divider'
 
 import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
@@ -52,6 +53,7 @@ const EditForm = ({ classes, match }) => {
 		const { getForm } = await client.request(GET_FORM_QUERY, {
 			_id: formId,
 		})
+
 		setTitle(getForm.title)
 		setCurrentForm(getForm)
 	}
@@ -69,6 +71,7 @@ const EditForm = ({ classes, match }) => {
 			_id: formId,
 			title,
 		})
+
 		setSnackBar({ open: true, message: 'Saved' })
 	}
 
@@ -78,6 +81,34 @@ const EditForm = ({ classes, match }) => {
 		result.splice(endIndex, 0, removed)
 
 		return result
+	}
+
+	const handleUpdateFormField = async field => {
+		const { _id, type, label } = field
+
+		await client
+			.request(EDIT_FIELD_MUTATION, {
+				_id,
+				type,
+				label,
+			})
+			.then(res => console.log('response, is this a promise?', res))
+
+		const updatedFormFields = currentForm.formFields.map(field => {
+			if (field._id === _id) {
+				return {
+					...field,
+					type,
+					label,
+				}
+			}
+			return field
+		})
+		setCurrentForm({
+			...currentForm,
+			formFields: updatedFormFields,
+		})
+		setSnackBar({ open: true, message: 'Field updated' })
 	}
 
 	const handleAddFormField = async () => {
@@ -101,6 +132,7 @@ const EditForm = ({ classes, match }) => {
 			_id,
 			formId,
 		})
+
 		setSnackBar({
 			open: true,
 			message: 'Field Deleted',
@@ -126,6 +158,7 @@ const EditForm = ({ classes, match }) => {
 			result.source.index,
 			result.destination.index,
 		)
+
 		setSnackBar({ open: true, message: 'Updated' })
 		setCurrentForm({
 			...currentForm,
@@ -160,7 +193,9 @@ const EditForm = ({ classes, match }) => {
 													{provided => (
 														<FormField
 															deleteField={deleteField}
+															updateField={handleUpdateFormField}
 															field={field}
+															formId={formId}
 															provided={provided}
 														/>
 													)}
@@ -182,7 +217,7 @@ const EditForm = ({ classes, match }) => {
 				</div>
 
 				<div className={classes.sidebar}>
-					<Typography variant="h4">Edit</Typography>
+					<Typography variant="h5">Edit</Typography>
 					<TextField
 						placeholder="Title"
 						label="Title"
@@ -197,10 +232,10 @@ const EditForm = ({ classes, match }) => {
 						Update Form
 					</Button>
 
-					<hr />
+					<Divider className={classes.divider} />
 
 					{/* INPUTS */}
-					<Typography variant="h4">Add An Input</Typography>
+					<Typography variant="h5">Add An Input</Typography>
 					<TextField
 						placeholder="Label"
 						label="Label"
@@ -222,7 +257,7 @@ const EditForm = ({ classes, match }) => {
 								id: 'field-type',
 							}}>
 							<MenuItem value="">
-								<em>None</em>
+								<em>Select</em>
 							</MenuItem>
 							{Object.values(FIELD_TYPES).map((input, idx) => {
 								return (
@@ -351,6 +386,9 @@ const styles = {
 		alignItems: 'center',
 		justifyContent: 'center',
 		flexDirection: 'column',
+	},
+	divider: {
+		margin: '15px 0',
 	},
 }
 

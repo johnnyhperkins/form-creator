@@ -52,43 +52,29 @@ export const UPDATE_FORMFIELD_ORDER = `
 `
 
 export const EDIT_FIELD_MUTATION = `
-  mutation($formId: ID!, $idx: Int,
-    $type: FIELD_TYPES,
-    $label: String, 
-    $labelPosition: LABEL_POSITIONS, 
-    $formElement: FORM_ELEMENTS, 
-    $inputType: INPUT_TYPES) {
-    editFormField(formId: $formId, idx: $idx, input: {
+  mutation($_id: ID!,
+    $type: String,
+    $label: String) {
+    editFormField(_id: $_id, input: {
       type: $type,
-      label: $label,
-      labelPosition: $labelPosition,
-      formElement: $formElement,
-      inputType: $inputType
+      label: $label
     }) {
-      formFields {
-        type
-        label
-        labelPosition
-        formElement
-        inputType
-      }
+      type
+      label
     }
   }`
 
 export const ADD_FIELD_MUTATION = `
   mutation($formId: ID!, 
     $type: String,
-    $label: String, 
-    $labelPosition: String) {
+    $label: String) {
     addFormField(formId: $formId, input: {
       type: $type,
-      label: $label,
-      labelPosition: $labelPosition
+      label: $label
     }) {
       _id
       type
       label
-      labelPosition
       form {
         _id
       }
@@ -102,29 +88,3 @@ mutation($formId: ID!) {
     _id
   }
 }`
-
-// export const CREATE_COMMENT_MUTATION = `
-// mutation($pinId: ID!, $text: String!) {
-//   createComment(pinId: $pinId, text: $text) {
-//     _id
-//     createdAt
-//     title
-//     content
-//     image
-//     latitude
-//     longitude
-//     author {
-//       _id
-//       name
-//     }
-//     comments {
-//       text
-//       createdAt
-//       author {
-//         name
-//         picture
-//       }
-//     }
-
-//   }
-// }`

@@ -19,7 +19,7 @@ module.exports = {
 					createdBy: ctx.currentUser._id,
 				},
 				err => {
-					console.log(err)
+					console.log('getForms Error: ', err)
 				},
 			).populate('createdBy')
 			return forms
@@ -29,7 +29,7 @@ module.exports = {
 			const form = await Form.findOne(
 				{ _id, createdBy: ctx.currentUser._id },
 				err => {
-					console.log(err)
+					console.log('getform error:', err)
 				},
 			)
 				.populate('createdBy')
@@ -55,7 +55,7 @@ module.exports = {
 			})
 			return formDeleted
 		}),
-		updateForm: authenticated(async (root, { _id, input }) => {
+		updateForm: authenticated(async (root, { _id, input }, ctx) => {
 			return await Form.findOneAndUpdate(
 				{
 					_id,
@@ -66,15 +66,16 @@ module.exports = {
 				},
 			)
 		}),
-		async deleteField(root, { _id, formId }) {
-			await FormField.findByIdAndRemove(_id)
+		deleteField: authenticated(async (root, { _id, formId }, ctx) => {
+			await FormField.findByIdAndRemove(_id, err => console.log(err))
 			await Form.findOneAndUpdate(
 				{ _id: formId },
 				{ $pull: { formFields: _id } },
 				{ new: true },
+				err => console.log(err),
 			)
-		},
-		async addFormField(root, { formId, input }) {
+		}),
+		addFormField: authenticated(async (root, { formId, input }) => {
 			const formField = await new FormField({
 				...input,
 				form: new ObjectId(formId),
@@ -89,17 +90,22 @@ module.exports = {
 			)
 
 			return formField
-		},
-		async updateFormFieldOrder(root, { _id, formFields }) {
-			await Form.findOneAndUpdate(
-				{
-					_id,
-				},
-				{
-					formFields,
-				},
-				err => console.log(err),
-			)
-		},
+		}),
+		editFormField: authenticated(async (root, { _id, input }, ctx) => {
+			await FormField.findOneAndUpdate({ _id }, input, err => console.log(err))
+		}),
+		updateFormFieldOrder: authenticated(
+			async (root, { _id, formFields }, ctx) => {
+				await Form.findOneAndUpdate(
+					{
+						_id,
+					},
+					{
+						formFields,
+					},
+					err => console.log(err),
+				)
+			},
+		),
 	},
 }

@@ -28,7 +28,6 @@ export const GET_FORM_QUERY = `query($_id: ID!) {
       _id
       type
       label
-      labelPosition
     }
     createdBy {
       _id

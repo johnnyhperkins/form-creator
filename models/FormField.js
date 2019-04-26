@@ -5,7 +5,6 @@ const FormFieldSchema = new mongoose.Schema(
 	{
 		type: String,
 		label: String,
-		labelPosition: String,
 		form: { type: mongoose.Schema.ObjectId, ref: 'Form' },
 	},
 	{ timestamps: true },
