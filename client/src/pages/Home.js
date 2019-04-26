@@ -1,7 +1,11 @@
-import React, { useState, useContext, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 
+import Grid from '@material-ui/core/Grid'
+import Divider from '@material-ui/core/Divider'
 import { withStyles } from '@material-ui/core/styles'
+import EditIcon from '@material-ui/icons/Edit'
+import AddIcon from '@material-ui/icons/Add'
 import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
@@ -9,8 +13,9 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
+import { ListItemIcon } from '@material-ui/core'
 
-import Context from '../context'
+import UIAlerts from '../components/UIAlerts'
 import {
 	CREATE_FORM_MUTATION,
 	DELETE_FORM_MUTATION,
@@ -19,8 +24,10 @@ import { GET_FORMS_QUERY } from '../graphql/queries'
 import { useClient } from '../client'
 
 const Home = ({ classes, history }) => {
-	const { state, dispatch } = useContext(Context)
+	const [ addForm, setAddForm ] = useState(false)
+	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 	const [ title, setTitle ] = useState('')
+	const [ forms, setForms ] = useState(null)
 	const client = useClient()
 
 	useEffect(() => {
@@ -29,131 +36,114 @@ const Home = ({ classes, history }) => {
 
 	const handleSubmit = async () => {
 		const { createForm } = await client.request(CREATE_FORM_MUTATION, { title })
-		dispatch({ type: 'CREATE_FORM', payload: createForm })
+		setForms([ ...forms, createForm ])
+		setAddForm(false)
 		setTitle('')
+		setSnackBar({ open: true, message: 'Form added' })
 	}
 
 	const handleClick = id => {
 		history.push(`/form/${id}`)
 	}
 
+	const handleClose = (event, reason) => {
+		if (reason === 'clickaway') return
+
+		setSnackBar({ ...snackBar, open: false })
+	}
+
 	const handleDeleteForm = async id => {
 		await client.request(DELETE_FORM_MUTATION, { formId: id })
-		dispatch({ type: 'DELETE_FORM', payload: id })
+		setForms(forms.filter(form => form._id !== id))
+		setSnackBar({ open: true, message: 'Form deleted' })
 	}
 
 	const getForms = async () => {
 		const { getForms } = await client.request(GET_FORMS_QUERY)
-		dispatch({ type: 'GET_FORMS', payload: getForms })
+		setForms(getForms)
 	}
 
 	return (
 		<div className={classes.root}>
-			<div className={classes.formArea}>
-				{state.forms && (
-					<div>
-						<Typography variant="h4">My Forms</Typography>
+			<Grid container justify="center">
+				{forms && (
+					<Grid item sm={6}>
+						<Typography variant="h5">My Forms</Typography>
+						<Divider className={classes.divider} />
 						<List>
-							{state.forms.map(form => {
+							{forms.map(form => {
 								return (
 									<ListItem className={classes.formItem} key={form._id}>
-										<ListItemText
+										<ListItemIcon
 											className={classes.pointer}
-											onClick={() => handleClick(form._id)}
-											primary={form.title}
-										/>
+											onClick={() => handleClick(form._id)}>
+											<EditIcon />
+										</ListItemIcon>
+										<ListItemText primary={form.title} />
 										<Button onClick={() => handleDeleteForm(form._id)}>
 											<DeleteIcon className={classes.deleteIcon} />
 										</Button>
 									</ListItem>
 								)
 							})}
+							<Divider className={classes.divider} />
+							<ListItem className={classes.addFormItem}>
+								<div className={classes.centerVertical}>
+									<ListItemIcon
+										className={classes.pointer}
+										onClick={() => setAddForm(!addForm)}>
+										<AddIcon />
+									</ListItemIcon>
+									{addForm && (
+										<TextField
+											label="Title"
+											variant="outlined"
+											className={classes.textField}
+											margin="none"
+											value={title}
+											onChange={e => setTitle(e.target.value)}
+										/>
+									)}
+								</div>
+								{addForm && <Button onClick={handleSubmit}>Create Form</Button>}
+							</ListItem>
 						</List>
-					</div>
+					</Grid>
 				)}
-			</div>
-			<div className={classes.sidebar}>
-				<Typography variant="h4">Create A Form</Typography>
-				<TextField
-					required
-					label="Title"
-					variant="outlined"
-					placeholder="Name your form"
-					className={classes.textField}
-					margin="normal"
-					value={title}
-					onChange={e => setTitle(e.target.value)}
-				/>
-				<Button variant="outlined" onClick={handleSubmit}>
-					Create New Form
-				</Button>
-			</div>
+			</Grid>
+			<UIAlerts snackBar={snackBar} handleClose={handleClose} />
 		</div>
 	)
 }
 
 const styles = {
 	root: {
-		padding: '0 50px',
-		display: 'flex',
-		justifyContent: 'space-between',
-		flexDirection: 'row',
-		alignItems: 'flex-start',
-		boxSizing: 'border-box',
-		minHeight: '100vh',
-	},
-	sidebar: {
-		width: '30%',
-		borderLeft: '1px solid black',
-		padding: '25px',
-		display: 'flex',
-		flexDirection: 'column',
-	},
-	formArea: {
-		width: '60%',
-		padding: '25px',
+		padding: '50px 0 0 0',
 	},
 	textField: {
-		width: 200,
+		margin: '0 15px',
+		width: '90%',
+		background: '#fff',
+		flexGrow: 2,
 	},
 	deleteIcon: {
 		color: 'red',
 	},
-	form: {
-		display: 'flex',
-		justifyContent: 'center',
-		flexDirection: 'column',
-		alignItems: 'center',
-	},
-	formItem: {
+	addFormItem: {
+		minHeight: 78,
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 	},
-	rootMobile: {
+	centerVertical: {
 		display: 'flex',
-		flexDirection: 'column-reverse',
+		alignItems: 'center',
 	},
-	navigationControl: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		margin: '1em',
-	},
-	popupImage: {
-		padding: '0.4em',
-		height: 200,
-		width: 200,
-		objectFit: 'cover',
+	divider: {
+		margin: '15px 0',
 	},
 	pointer: {
 		cursor: 'pointer',
-	},
-	popupTab: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexDirection: 'column',
 	},
 }
 

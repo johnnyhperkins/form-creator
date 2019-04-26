@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles'
 import ExitToApp from '@material-ui/icons/ExitToApp'
 import Typography from '@material-ui/core/Typography'
 
-const Signout = ({ classes }) => {
+const Signout = ({ classes, currentUser }) => {
 	const { dispatch } = useContext(Context)
 	const onSignout = () => {
 		dispatch({ type: 'SIGNOUT_USER' })
@@ -14,29 +14,47 @@ const Signout = ({ classes }) => {
 		<GoogleLogout
 			onLogoutSuccess={onSignout}
 			render={({ onClick }) => (
-				<span className={classes.root} onClick={onClick}>
-					<Typography variant="body1" className={classes.buttonText}>
-						Signout
-					</Typography>
-					<ExitToApp className={classes.buttonIcon} />
-				</span>
+				<div className={classes.root}>
+					{currentUser.picture && (
+						<img
+							src={currentUser.picture}
+							className={classes.picture}
+							alt={currentUser.name}
+						/>
+					)}
+					<span className={classes.signout} onClick={onClick}>
+						<Typography variant="body1" className={classes.white}>
+							Signout
+						</Typography>
+						<ExitToApp className={classes.buttonIcon} />
+					</span>
+				</div>
 			)}
 		/>
 	)
 }
 
-const styles = {
+const styles = theme => ({
 	root: {
+		display: 'flex',
+		alignContent: 'flex-end',
+		alignItems: 'center',
+	},
+	signout: {
 		cursor: 'pointer',
 		display: 'flex',
 	},
-	buttonText: {
-		color: 'orange',
-	},
 	buttonIcon: {
 		marginLeft: '5px',
-		color: 'orange',
 	},
-}
+	white: {
+		color: 'white',
+	},
+	picture: {
+		height: '40px',
+		borderRadius: '90%',
+		marginRight: theme.spacing.unit * 2,
+	},
+})
 
 export default withStyles(styles)(Signout)

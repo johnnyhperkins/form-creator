@@ -3,19 +3,26 @@ import { withRouter } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import styled from 'styled-components'
+import Grid from '@material-ui/core/Grid'
+import Drawer from '@material-ui/core/Drawer'
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Button from '@material-ui/core/Button'
+import EditIcon from '@material-ui/icons/Edit'
 import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
-import Snackbar from '@material-ui/core/Snackbar'
-import IconButton from '@material-ui/core/IconButton'
-import CheckCircleIcon from '@material-ui/icons/CheckCircle'
+import List from '@material-ui/core/List'
+import ListItem from '@material-ui/core/ListItem'
+import ListItemText from '@material-ui/core/ListItemText'
+import AddIcon from '@material-ui/icons/Add'
+import { ListItemIcon } from '@material-ui/core'
+
 import Divider from '@material-ui/core/Divider'
 
+import UIAlerts from '../components/UIAlerts'
 import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
 import { GET_FORM_QUERY } from '../graphql/queries'
@@ -36,10 +43,17 @@ const FieldContainer = styled.div`
 
 const EditForm = ({ classes, match }) => {
 	const [ title, setTitle ] = useState('')
-	// const [ currentForm, setCurrentForm ] = useState(null)
 	const [ formFields, setFormFields ] = useState(null)
 	const [ label, setLabel ] = useState('')
 	const [ type, setType ] = useState('')
+	const [ fieldId, setFieldId ] = useState('')
+	const [ addField, setAddField ] = useState(false)
+	const [ editTitle, setEditTitle ] = useState(false)
+	const [ newFieldLabel, setNewFieldLabel ] = useState('')
+	const [ newFieldType, setNewFieldType ] = useState('')
+
+	const [ drawerOpen, setDrawerOpen ] = useState(false)
+	const [ editField, setEditField ] = useState(null)
 	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 
 	const { id: formId } = match.params
@@ -74,7 +88,7 @@ const EditForm = ({ classes, match }) => {
 			_id: formId,
 			title,
 		})
-
+		setEditTitle(false)
 		setSnackBar({ open: true, message: 'Saved' })
 	}
 
@@ -86,19 +100,22 @@ const EditForm = ({ classes, match }) => {
 		return result
 	}
 
-	const handleUpdateFormField = async field => {
-		const { _id, type, label } = field
+	const startUpdateField = field => {
+		setDrawerOpen(!drawerOpen)
+		setType(field.type)
+		setLabel(field.label)
+		setFieldId(field._id)
+	}
 
-		await client
-			.request(EDIT_FIELD_MUTATION, {
-				_id,
-				type,
-				label,
-			})
-			.then(res => console.log('response, is this a promise?', res))
+	const handleUpdateField = async () => {
+		await client.request(EDIT_FIELD_MUTATION, {
+			_id: fieldId,
+			type,
+			label,
+		})
 
 		const updatedFormFields = formFields.map(field => {
-			if (field._id === _id) {
+			if (field._id === fieldId) {
 				return {
 					...field,
 					type,
@@ -109,19 +126,23 @@ const EditForm = ({ classes, match }) => {
 		})
 
 		setFormFields(updatedFormFields)
+		setDrawerOpen(!drawerOpen)
+		setLabel('')
+		setType('')
+		setFieldId('')
 		setSnackBar({ open: true, message: 'Field updated' })
 	}
 
 	const handleAddFormField = async () => {
 		const { addFormField } = await client.request(ADD_FIELD_MUTATION, {
 			formId,
-			type,
-			label,
+			type: newFieldType,
+			label: newFieldLabel,
 		})
 
 		setFormFields([ ...formFields, addFormField ])
-		setLabel('')
-		setType('')
+		setNewFieldLabel('')
+		setNewFieldType('')
 		setSnackBar({ open: true, message: 'Field added' })
 	}
 
@@ -164,137 +185,186 @@ const EditForm = ({ classes, match }) => {
 		setSnackBar({ open: true, message: 'Updated' })
 	}
 
-	return (
-		formFields && (
-			<div className={classes.root}>
-				<div className={classes.formArea}>
-					<Typography variant="h4">{title}</Typography>
-					{formFields.length ? (
-						<DragDropContext onDragEnd={onDragEnd}>
-							<Droppable droppableId={title}>
-								{provided => (
-									<FieldContainer
-										ref={provided.innerRef}
-										{...provided.droppableProps}>
-										{formFields.map((field, idx) => {
-											return (
-												<Draggable
-													draggableId={field._id}
-													key={field._id}
-													index={idx}>
-													{provided => (
-														<FormField
-															deleteField={deleteField}
-															updateField={handleUpdateFormField}
-															field={field}
-															formId={formId}
-															provided={provided}
-														/>
-													)}
-												</Draggable>
-											)
-										})}
-										{provided.placeholder}
-									</FieldContainer>
-								)}
-							</Droppable>
-						</DragDropContext>
-					) : (
-						<div className={classes.emptyFieldsWrapper}>
-							<Typography variant="h5" className={classes.emptyFieldsText}>
-								Add fields in the sidebar
-							</Typography>
-						</div>
-					)}
-				</div>
-
-				<div className={classes.sidebar}>
-					<Typography variant="h5">Edit</Typography>
+	const renderTitle = bool => {
+		if (bool) {
+			return (
+				<div className={classes.editTitle}>
 					<TextField
 						placeholder="Title"
 						label="Title"
-						variant="outlined"
-						className={classes.textField}
-						margin="normal"
+						className={classes.editTitleField}
 						value={title}
 						onChange={e => setTitle(e.target.value)}
 					/>
-
-					<Button variant="outlined" onClick={() => handleUpdateForm()}>
-						Update Form
-					</Button>
-
-					<Divider className={classes.divider} />
-
-					{/* INPUTS */}
-					<Typography variant="h5">Add An Input</Typography>
-					<TextField
-						placeholder="Label"
-						label="Label"
-						variant="outlined"
-						className={classes.textField}
-						margin="normal"
-						value={label}
-						onChange={e => setLabel(e.target.value)}
-					/>
-					<FormControl className={classes.formControl}>
-						<InputLabel htmlFor="field-type">Select Type</InputLabel>
-						<Select
-							value={type}
-							label="Type"
-							variant="outlined"
-							onChange={e => setType(e.target.value)}
-							inputProps={{
-								name: 'type',
-								id: 'field-type',
-							}}>
-							<MenuItem value="">
-								<em>Select</em>
-							</MenuItem>
-							{Object.values(FIELD_TYPES).map((input, idx) => {
-								return (
-									<MenuItem key={idx} value={input}>
-										{input}
-									</MenuItem>
-								)
-							})}
-						</Select>
-					</FormControl>
-					<Button
-						variant="outlined"
-						className={classes.submitButton}
-						onClick={() => handleAddFormField()}>
-						Add Field
-					</Button>
+					<Button onClick={() => handleUpdateForm()}>Save</Button>
 				</div>
-				<Snackbar
-					anchorOrigin={{
-						vertical: 'bottom',
-						horizontal: 'left',
+			)
+		}
+		return (
+			<Typography variant="h4" classNa>
+				{title}{' '}
+				<EditIcon
+					onClick={() => {
+						setEditTitle(!editTitle)
 					}}
-					className={classes.success}
-					open={snackBar.open}
-					autoHideDuration={2000}
-					onClose={handleClose}
-					ContentProps={{
-						'aria-describedby': 'message-id',
-					}}
-					message={
-						<span id="message-id" className={classes.snackbarMessage}>
-							{snackBar.message}
-						</span>
-					}
-					action={[
-						<IconButton
-							key="close"
-							aria-label="Close"
-							color="inherit"
-							className={classes.close}
-							onClick={handleClose}>
-							<CheckCircleIcon />
-						</IconButton>,
-					]}
 				/>
+			</Typography>
+		)
+	}
+
+	return (
+		formFields && (
+			<div className={classes.root}>
+				<Grid container justify="center">
+					<Grid item sm={6}>
+						{renderTitle(editTitle)}
+
+						{formFields.length ? (
+							<div>
+								<DragDropContext onDragEnd={onDragEnd}>
+									<Droppable droppableId={title}>
+										{provided => (
+											<FieldContainer
+												ref={provided.innerRef}
+												{...provided.droppableProps}>
+												{formFields.map((field, idx) => {
+													return (
+														<Draggable
+															draggableId={field._id}
+															key={field._id}
+															index={idx}>
+															{provided => (
+																<FormField
+																	deleteField={deleteField}
+																	startUpdateField={startUpdateField}
+																	field={field}
+																	formId={formId}
+																	provided={provided}
+																/>
+															)}
+														</Draggable>
+													)
+												})}
+												{provided.placeholder}
+											</FieldContainer>
+										)}
+									</Droppable>
+								</DragDropContext>
+								<Divider className={classes.divider} />
+								<List>
+									<ListItem className={classes.addFormItem}>
+										<div className={classes.centerVertical}>
+											<ListItemIcon
+												className={classes.pointer}
+												onClick={() => setAddField(!addField)}>
+												<AddIcon />
+											</ListItemIcon>
+											{addField && (
+												<div>
+													<TextField
+														placeholder="Label"
+														label="Label"
+														// variant="outlined"
+														className={classes.textField}
+														margin="none"
+														value={newFieldLabel}
+														onChange={e => setNewFieldLabel(e.target.value)}
+													/>
+													<FormControl className={classes.formControl}>
+														<InputLabel htmlFor="field-type">
+															Select Type
+														</InputLabel>
+														<Select
+															value={newFieldType}
+															label="Type"
+															variant="outlined"
+															onChange={e => setNewFieldType(e.target.value)}
+															inputProps={{
+																name: 'type',
+																id: 'field-type',
+															}}>
+															<MenuItem value="">
+																<em>Select</em>
+															</MenuItem>
+															{Object.values(FIELD_TYPES).map((input, idx) => {
+																return (
+																	<MenuItem key={idx} value={input}>
+																		{input}
+																	</MenuItem>
+																)
+															})}
+														</Select>
+													</FormControl>
+												</div>
+											)}
+										</div>
+										{addField && (
+											<Button onClick={() => handleAddFormField()}>
+												Add Field
+											</Button>
+										)}
+									</ListItem>
+								</List>
+							</div>
+						) : (
+							<div className={classes.emptyFieldsWrapper}>
+								<Typography variant="h5" className={classes.emptyFieldsText}>
+									Add fields in the sidebar
+								</Typography>
+							</div>
+						)}
+					</Grid>
+					<Drawer
+						open={drawerOpen}
+						anchor="right"
+						onClose={() => setDrawerOpen(!drawerOpen)}>
+						<div className={classes.drawer}>
+							<Typography component="h2" variant="h5">
+								Edit Field
+							</Typography>
+
+							<TextField
+								placeholder="Label"
+								className={classes.textField}
+								margin="normal"
+								value={label}
+								onChange={e => setLabel(e.target.value)}
+							/>
+
+							<FormControl className={classes.formControl}>
+								<InputLabel htmlFor="field-type">Select Type</InputLabel>
+								<Select
+									value={type}
+									label="Type"
+									variant="outlined"
+									onChange={e => setType(e.target.value)}
+									inputProps={{
+										name: 'type',
+										id: 'field-type',
+									}}>
+									<MenuItem value="">
+										<em>Select</em>
+									</MenuItem>
+									{Object.values(FIELD_TYPES).map((input, idx) => {
+										return (
+											<MenuItem key={idx} value={input}>
+												{input}
+											</MenuItem>
+										)
+									})}
+								</Select>
+							</FormControl>
+
+							<Button
+								variant="outlined"
+								className={classes.submitButton}
+								onClick={() => handleUpdateField(fieldId)}>
+								Update
+							</Button>
+						</div>
+					</Drawer>
+					<UIAlerts snackBar={snackBar} handleClose={handleClose} />
+				</Grid>
 			</div>
 		)
 	)
@@ -302,13 +372,14 @@ const EditForm = ({ classes, match }) => {
 
 const styles = {
 	root: {
-		padding: '0 50px',
+		padding: '50px 0 0 0',
 		display: 'flex',
 		justifyContent: 'space-between',
 		flexDirection: 'row',
 		alignItems: 'flex-start',
 		boxSizing: 'border-box',
 	},
+
 	emptyFieldsText: {
 		fontSize: '24px',
 		color: '#ddd',
@@ -323,19 +394,18 @@ const styles = {
 		textTransform: 'uppercase',
 		fontWeight: 'bold',
 	},
-	sidebar: {
-		width: '30%',
-		borderLeft: '1px solid black',
-		padding: '25px',
+	drawer: {
+		width: '350px',
+		padding: '35px',
 		display: 'flex',
 		flexDirection: 'column',
 	},
-	formArea: {
-		width: '60%',
-		padding: '25px',
+	editTitleField: {
+		fontSize: '24px',
 	},
 	textField: {
-		width: 200,
+		width: '100%',
+		margin: '0 15px 0 0',
 	},
 	deleteIcon: {
 		color: 'red',
@@ -347,37 +417,26 @@ const styles = {
 		alignItems: 'center',
 	},
 	formControl: {
-		width: 220,
+		width: '100%',
+		marginTop: 15,
+	},
+	addFormItem: {
+		minHeight: 78,
+		display: 'flex',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+	},
+	centerVertical: {
+		display: 'flex',
+		alignItems: 'center',
 	},
 	formItem: {
 		display: 'flex',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 	},
-	rootMobile: {
-		display: 'flex',
-		flexDirection: 'column-reverse',
-	},
-	navigationControl: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		margin: '1em',
-	},
 	submitButton: {
 		marginTop: 15,
-	},
-	popupImage: {
-		padding: '0.4em',
-		height: 200,
-		width: 200,
-		objectFit: 'cover',
-	},
-	popupTab: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexDirection: 'column',
 	},
 	divider: {
 		margin: '15px 0',
