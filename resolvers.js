@@ -22,6 +22,7 @@ module.exports = {
 					console.log('getForms Error: ', err)
 				},
 			).populate('createdBy')
+
 			return forms
 		}),
 
@@ -31,9 +32,8 @@ module.exports = {
 				err => {
 					console.log('getform error:', err)
 				},
-			)
-				.populate('createdBy')
-				.populate('formFields')
+			).populate('formFields')
+
 			return form
 		}),
 	},
@@ -44,6 +44,7 @@ module.exports = {
 				createdBy: ctx.currentUser._id,
 			}).save()
 			const formAdded = await Form.populate(newForm, 'createdBy')
+
 			return formAdded
 		}),
 		deleteForm: authenticated(async (root, { formId }, ctx) => {

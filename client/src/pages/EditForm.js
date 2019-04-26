@@ -36,7 +36,8 @@ const FieldContainer = styled.div`
 
 const EditForm = ({ classes, match }) => {
 	const [ title, setTitle ] = useState('')
-	const [ currentForm, setCurrentForm ] = useState(null)
+	// const [ currentForm, setCurrentForm ] = useState(null)
+	const [ formFields, setFormFields ] = useState(null)
 	const [ label, setLabel ] = useState('')
 	const [ type, setType ] = useState('')
 	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
@@ -50,12 +51,14 @@ const EditForm = ({ classes, match }) => {
 	}, [])
 
 	const getForm = async () => {
-		const { getForm } = await client.request(GET_FORM_QUERY, {
+		const {
+			getForm: { title, formFields },
+		} = await client.request(GET_FORM_QUERY, {
 			_id: formId,
 		})
 
-		setTitle(getForm.title)
-		setCurrentForm(getForm)
+		setTitle(title)
+		setFormFields(formFields)
 	}
 
 	const handleClose = (event, reason) => {
@@ -94,7 +97,7 @@ const EditForm = ({ classes, match }) => {
 			})
 			.then(res => console.log('response, is this a promise?', res))
 
-		const updatedFormFields = currentForm.formFields.map(field => {
+		const updatedFormFields = formFields.map(field => {
 			if (field._id === _id) {
 				return {
 					...field,
@@ -104,10 +107,8 @@ const EditForm = ({ classes, match }) => {
 			}
 			return field
 		})
-		setCurrentForm({
-			...currentForm,
-			formFields: updatedFormFields,
-		})
+
+		setFormFields(updatedFormFields)
 		setSnackBar({ open: true, message: 'Field updated' })
 	}
 
@@ -118,13 +119,10 @@ const EditForm = ({ classes, match }) => {
 			label,
 		})
 
-		setSnackBar({ open: true, message: 'Field added' })
-		setCurrentForm({
-			...currentForm,
-			formFields: [ ...currentForm.formFields, addFormField ],
-		})
+		setFormFields([ ...formFields, addFormField ])
 		setLabel('')
 		setType('')
+		setSnackBar({ open: true, message: 'Field added' })
 	}
 
 	const deleteField = async _id => {
@@ -133,13 +131,10 @@ const EditForm = ({ classes, match }) => {
 			formId,
 		})
 
+		setFormFields(formFields.filter(field => field._id !== _id))
 		setSnackBar({
 			open: true,
 			message: 'Field Deleted',
-		})
-		setCurrentForm({
-			...currentForm,
-			formFields: currentForm.formFields.filter(field => field._id !== _id),
 		})
 	}
 
@@ -154,37 +149,34 @@ const EditForm = ({ classes, match }) => {
 			return
 
 		const newFields = reorder(
-			currentForm.formFields,
+			formFields,
 			result.source.index,
 			result.destination.index,
 		)
-
-		setSnackBar({ open: true, message: 'Updated' })
-		setCurrentForm({
-			...currentForm,
-			formFields: newFields,
-		})
 
 		const fieldIds = newFields.map(field => field._id)
 		await client.request(UPDATE_FORMFIELD_ORDER, {
 			_id: formId,
 			formFields: fieldIds,
 		})
+
+		setFormFields(newFields)
+		setSnackBar({ open: true, message: 'Updated' })
 	}
 
 	return (
-		currentForm && (
+		formFields && (
 			<div className={classes.root}>
 				<div className={classes.formArea}>
 					<Typography variant="h4">{title}</Typography>
-					{currentForm.formFields.length ? (
+					{formFields.length ? (
 						<DragDropContext onDragEnd={onDragEnd}>
-							<Droppable droppableId={currentForm._id}>
+							<Droppable droppableId={title}>
 								{provided => (
 									<FieldContainer
 										ref={provided.innerRef}
 										{...provided.droppableProps}>
-										{currentForm.formFields.map((field, idx) => {
+										{formFields.map((field, idx) => {
 											return (
 												<Draggable
 													draggableId={field._id}

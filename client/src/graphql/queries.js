@@ -22,16 +22,10 @@ export const GET_FORM_QUERY = `query($_id: ID!) {
   getForm(_id: $_id) {
     _id
     title
-    action
-    method
     formFields {
       _id
       type
       label
-    }
-    createdBy {
-      _id
-      name
     }
   }
 }`
