@@ -22,6 +22,7 @@ import { ListItemIcon } from '@material-ui/core'
 
 import Divider from '@material-ui/core/Divider'
 
+import AddField from '../components/AddField'
 import UIAlerts from '../components/UIAlerts'
 import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
@@ -201,7 +202,7 @@ const EditForm = ({ classes, match }) => {
 			)
 		}
 		return (
-			<Typography variant="h4" classNa>
+			<Typography variant="h4">
 				{title}{' '}
 				<EditIcon
 					onClick={() => {
@@ -219,100 +220,48 @@ const EditForm = ({ classes, match }) => {
 					<Grid item sm={6}>
 						{renderTitle(editTitle)}
 
-						{formFields.length ? (
-							<div>
-								<DragDropContext onDragEnd={onDragEnd}>
-									<Droppable droppableId={title}>
-										{provided => (
-											<FieldContainer
-												ref={provided.innerRef}
-												{...provided.droppableProps}>
-												{formFields.map((field, idx) => {
-													return (
-														<Draggable
-															draggableId={field._id}
-															key={field._id}
-															index={idx}>
-															{provided => (
-																<FormField
-																	deleteField={deleteField}
-																	startUpdateField={startUpdateField}
-																	field={field}
-																	formId={formId}
-																	provided={provided}
-																/>
-															)}
-														</Draggable>
-													)
-												})}
-												{provided.placeholder}
-											</FieldContainer>
-										)}
-									</Droppable>
-								</DragDropContext>
-								<Divider className={classes.divider} />
-								<List>
-									<ListItem className={classes.addFormItem}>
-										<div className={classes.centerVertical}>
-											<ListItemIcon
-												className={classes.pointer}
-												onClick={() => setAddField(!addField)}>
-												<AddIcon />
-											</ListItemIcon>
-											{addField && (
-												<div>
-													<TextField
-														placeholder="Label"
-														label="Label"
-														// variant="outlined"
-														className={classes.textField}
-														margin="none"
-														value={newFieldLabel}
-														onChange={e => setNewFieldLabel(e.target.value)}
-													/>
-													<FormControl className={classes.formControl}>
-														<InputLabel htmlFor="field-type">
-															Select Type
-														</InputLabel>
-														<Select
-															value={newFieldType}
-															label="Type"
-															variant="outlined"
-															onChange={e => setNewFieldType(e.target.value)}
-															inputProps={{
-																name: 'type',
-																id: 'field-type',
-															}}>
-															<MenuItem value="">
-																<em>Select</em>
-															</MenuItem>
-															{Object.values(FIELD_TYPES).map((input, idx) => {
-																return (
-																	<MenuItem key={idx} value={input}>
-																		{input}
-																	</MenuItem>
-																)
-															})}
-														</Select>
-													</FormControl>
-												</div>
-											)}
-										</div>
-										{addField && (
-											<Button onClick={() => handleAddFormField()}>
-												Add Field
-											</Button>
-										)}
-									</ListItem>
-								</List>
-							</div>
-						) : (
-							<div className={classes.emptyFieldsWrapper}>
-								<Typography variant="h5" className={classes.emptyFieldsText}>
-									Add fields in the sidebar
-								</Typography>
-							</div>
-						)}
+						<div>
+							<DragDropContext onDragEnd={onDragEnd}>
+								<Droppable droppableId={title}>
+									{provided => (
+										<FieldContainer
+											ref={provided.innerRef}
+											{...provided.droppableProps}>
+											{formFields.map((field, idx) => {
+												return (
+													<Draggable
+														draggableId={field._id}
+														key={field._id}
+														index={idx}>
+														{provided => (
+															<FormField
+																deleteField={deleteField}
+																startUpdateField={startUpdateField}
+																field={field}
+																formId={formId}
+																provided={provided}
+															/>
+														)}
+													</Draggable>
+												)
+											})}
+											{provided.placeholder}
+										</FieldContainer>
+									)}
+								</Droppable>
+							</DragDropContext>
+							<Divider className={classes.divider} />
+							<AddField
+								formFields={formFields}
+								addField={addField}
+								setAddField={setAddField}
+								setNewFieldLabel={setNewFieldLabel}
+								newFieldLabel={newFieldLabel}
+								setNewFieldType={setNewFieldType}
+								newFieldType={newFieldType}
+								handleAddFormField={handleAddFormField}
+							/>
+						</div>
 					</Grid>
 					<Drawer
 						open={drawerOpen}
@@ -379,17 +328,6 @@ const styles = {
 		alignItems: 'flex-start',
 		boxSizing: 'border-box',
 	},
-
-	emptyFieldsText: {
-		fontSize: '24px',
-		color: '#ddd',
-	},
-	emptyFieldsWrapper: {
-		height: '100vh',
-		display: 'flex',
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
 	snackbarMessage: {
 		textTransform: 'uppercase',
 		fontWeight: 'bold',
@@ -404,31 +342,14 @@ const styles = {
 		fontSize: '24px',
 	},
 	textField: {
-		width: '100%',
 		margin: '0 15px 0 0',
 	},
 	deleteIcon: {
 		color: 'red',
 	},
-	form: {
-		display: 'flex',
-		justifyContent: 'center',
-		flexDirection: 'column',
-		alignItems: 'center',
-	},
 	formControl: {
 		width: '100%',
 		marginTop: 15,
-	},
-	addFormItem: {
-		minHeight: 78,
-		display: 'flex',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-	},
-	centerVertical: {
-		display: 'flex',
-		alignItems: 'center',
 	},
 	formItem: {
 		display: 'flex',

@@ -71,21 +71,27 @@ const Home = ({ classes, history }) => {
 						<Typography variant="h5">My Forms</Typography>
 						<Divider className={classes.divider} />
 						<List>
-							{forms.map(form => {
-								return (
-									<ListItem className={classes.formItem} key={form._id}>
-										<ListItemIcon
-											className={classes.pointer}
-											onClick={() => handleClick(form._id)}>
-											<EditIcon />
-										</ListItemIcon>
-										<ListItemText primary={form.title} />
-										<Button onClick={() => handleDeleteForm(form._id)}>
-											<DeleteIcon className={classes.deleteIcon} />
-										</Button>
-									</ListItem>
-								)
-							})}
+							{forms.length ? (
+								forms.map(form => {
+									return (
+										<ListItem className={classes.formItem} key={form._id}>
+											<ListItemIcon
+												className={classes.pointer}
+												onClick={() => handleClick(form._id)}>
+												<EditIcon />
+											</ListItemIcon>
+											<ListItemText primary={form.title} />
+											<Button onClick={() => handleDeleteForm(form._id)}>
+												<DeleteIcon className={classes.deleteIcon} />
+											</Button>
+										</ListItem>
+									)
+								})
+							) : (
+								<ListItem>
+									<ListItemText primary="Click the plus button to create a form." />
+								</ListItem>
+							)}
 							<Divider className={classes.divider} />
 							<ListItem className={classes.addFormItem}>
 								<div className={classes.centerVertical}>
