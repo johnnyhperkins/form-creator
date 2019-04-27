@@ -25,6 +25,7 @@
 		"subscriptions-transport-ws": "^0.9.15"
 	},
 	"scripts": {
+		"now-build": "react-scripts build",
 		"start": "react-scripts start",
 		"build": "react-scripts build",
 		"test": "react-scripts test",
@@ -33,10 +34,5 @@
 	"eslintConfig": {
 		"extends": "react-app"
 	},
-	"browserslist": [
-		">0.2%",
-		"not dead",
-		"not ie <= 11",
-		"not op_mini all"
-	]
+	"browserslist": [ ">0.2%", "not dead", "not ie <= 11", "not op_mini all" ]
 }

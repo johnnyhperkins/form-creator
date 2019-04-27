@@ -13,7 +13,7 @@ import AppRouter from './AppRouter'
 import * as serviceWorker from './serviceWorker'
 
 const httpLink = new HttpLink({
-	uri: 'http://localhost:4000/graphql',
+	uri: 'https://border-box.herokuapp.com/graphql',
 })
 
 const client = new ApolloClient({
