@@ -39,10 +39,12 @@ module.exports = {
 	},
 	Mutation: {
 		createForm: authenticated(async (root, args, ctx) => {
-			const newForm = await new Form({
+			const newForm = new Form({
 				...args.input,
 				createdBy: ctx.currentUser._id,
-			}).save()
+			})
+			newForm.url = `/${ctx.currentUser.name.replace(/ /g, '')}/${newForm._id}`
+			await newForm.save()
 			const formAdded = await Form.populate(newForm, 'createdBy')
 
 			return formAdded

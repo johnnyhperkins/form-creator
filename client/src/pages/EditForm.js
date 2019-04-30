@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { withRouter } from 'react-router-dom'
+import { withRouter, Link } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import styled from 'styled-components'
@@ -14,11 +14,6 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
-import List from '@material-ui/core/List'
-import ListItem from '@material-ui/core/ListItem'
-import ListItemText from '@material-ui/core/ListItemText'
-import AddIcon from '@material-ui/icons/Add'
-import { ListItemIcon } from '@material-ui/core'
 
 import Divider from '@material-ui/core/Divider'
 
@@ -44,6 +39,7 @@ const FieldContainer = styled.div`
 
 const EditForm = ({ classes, match }) => {
 	const [ title, setTitle ] = useState('')
+	const [ url, setUrl ] = useState('')
 	const [ formFields, setFormFields ] = useState(null)
 	const [ label, setLabel ] = useState('')
 	const [ type, setType ] = useState('')
@@ -54,7 +50,6 @@ const EditForm = ({ classes, match }) => {
 	const [ newFieldType, setNewFieldType ] = useState('')
 
 	const [ drawerOpen, setDrawerOpen ] = useState(false)
-	const [ editField, setEditField ] = useState(null)
 	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 
 	const { id: formId } = match.params
@@ -67,11 +62,12 @@ const EditForm = ({ classes, match }) => {
 
 	const getForm = async () => {
 		const {
-			getForm: { title, formFields },
+			getForm: { title, url, formFields },
 		} = await client.request(GET_FORM_QUERY, {
 			_id: formId,
 		})
 
+		setUrl(url)
 		setTitle(title)
 		setFormFields(formFields)
 	}
@@ -203,7 +199,7 @@ const EditForm = ({ classes, match }) => {
 		}
 		return (
 			<Typography variant="h4">
-				{title}{' '}
+				{title}
 				<EditIcon
 					onClick={() => {
 						setEditTitle(!editTitle)
@@ -219,7 +215,10 @@ const EditForm = ({ classes, match }) => {
 				<Grid container justify="center">
 					<Grid item sm={6}>
 						{renderTitle(editTitle)}
-
+						<Link to={url} className={classes.smallLink}>
+							View Form
+						</Link>
+						<Divider className={classes.divider} />
 						<div>
 							<DragDropContext onDragEnd={onDragEnd}>
 								<Droppable droppableId={title}>
@@ -331,6 +330,13 @@ const styles = {
 	snackbarMessage: {
 		textTransform: 'uppercase',
 		fontWeight: 'bold',
+	},
+	smallLink: {
+		color: '#777',
+		display: 'block',
+		marginTop: 10,
+		fontSize: 14,
+		fontFamily: 'Roboto',
 	},
 	drawer: {
 		width: '350px',

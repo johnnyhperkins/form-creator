@@ -22,6 +22,7 @@ export const GET_FORM_QUERY = `query($_id: ID!) {
   getForm(_id: $_id) {
     _id
     title
+    url
     formFields {
       _id
       type

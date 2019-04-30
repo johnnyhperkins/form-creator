@@ -14,6 +14,7 @@ module.exports = gql`
 		title: String!
 		action: String
 		method: String
+		url: String
 		formFields: [FormField!]
 	}
 
