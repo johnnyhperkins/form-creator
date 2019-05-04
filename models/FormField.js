@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const _ = require('lodash')
 
 const FormFieldSchema = new mongoose.Schema(
 	{

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { withRouter } from 'react-router-dom'
+import React, { useState, useEffect, useContext } from 'react'
+import { withRouter, Link } from 'react-router-dom'
 
 import Grid from '@material-ui/core/Grid'
 
@@ -9,14 +9,24 @@ import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import Typography from '@material-ui/core/Typography'
 
-import { GET_FORM_QUERY } from '../graphql/queries'
-
+import { SUBMIT_FORM_MUTATION } from '../graphql/mutations'
+import { GET_FORM_QUERY, GET_RESPONSES_QUERY } from '../graphql/queries'
+import Context from '../context'
 import { useClient } from '../client'
+import FieldResponse from '../components/FieldResponse'
+import UIAlerts from '../components/UIAlerts'
 
-const DisplayForm = ({ classes, match }) => {
-	const [ title, setTitle ] = useState('')
+const DisplayForm = ({ classes, match, history }) => {
+	const { state: { currentUser } } = useContext(Context)
+	const [ staticState, setStaticState ] = useState({
+		title: '',
+		ownerId: '',
+	})
+	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 	const [ formFields, setFormFields ] = useState(null)
 	const [ fieldState, setFieldState ] = useState({})
+	const [ responsesOpen, setResponsesOpen ] = useState(false)
+	const [ formResponses, setFormResponses ] = useState([])
 
 	const { form_id: formId } = match.params
 
@@ -26,24 +36,75 @@ const DisplayForm = ({ classes, match }) => {
 		getForm()
 	}, [])
 
-	const getForm = async () => {
-		const {
-			getForm: { title, formFields },
-		} = await client.request(GET_FORM_QUERY, {
-			_id: formId,
-		})
+	const setFormState = formFields => {
 		const createFieldState = {}
 
 		formFields.forEach(field => {
-			createFieldState[field.label] = ''
+			createFieldState[field._id] = ''
 		})
+
 		setFieldState(createFieldState)
+	}
+
+	const handleClose = (event, reason) => {
+		if (reason === 'clickaway') {
+			return
+		}
+
+		setSnackBar({ ...snackBar, open: false })
+	}
+
+	const getForm = async () => {
+		const {
+			getForm: { title, formFields, createdBy: { _id } },
+		} = await client.request(GET_FORM_QUERY, {
+			_id: formId,
+		})
+		setStaticState({
+			title,
+			ownerId: _id,
+		})
+
 		setFormFields(formFields)
-		setTitle(title)
+		setFormState(formFields)
+
+		if (_id === currentUser._id) {
+			const { getResponses } = await client.request(GET_RESPONSES_QUERY, {
+				formId,
+			})
+
+			if (getResponses.length) {
+				setFormResponses(getResponses)
+			}
+		}
+	}
+
+	const handleSubmit = async () => {
+		const fieldStateArray = Object.keys(fieldState).map(key => ({
+			form: formId,
+			formField: key,
+			value: fieldState[key],
+		}))
+
+		const variables = {
+			formId,
+			input: fieldStateArray,
+		}
+
+		setSnackBar({
+			open: true,
+			message: 'Form Submitted',
+		})
+
+		const { submitForm } = await client.request(SUBMIT_FORM_MUTATION, variables)
+
+		history.push('/')
+
+		// setFormState(formFields)
 	}
 
 	const renderField = field => {
-		const { type, label } = field
+		const { type, label, _id } = field
 		switch (type) {
 			case 'Text':
 				return (
@@ -52,7 +113,7 @@ const DisplayForm = ({ classes, match }) => {
 						variant="outlined"
 						label={label}
 						onChange={e =>
-							setFieldState({ ...fieldState, [label]: e.target.value })}
+							setFieldState({ ...fieldState, [_id]: e.target.value })}
 						value={fieldState[label]}
 					/>
 				)
@@ -64,7 +125,7 @@ const DisplayForm = ({ classes, match }) => {
 						label={label}
 						variant="outlined"
 						onChange={e =>
-							setFieldState({ ...fieldState, [label]: e.target.value })}
+							setFieldState({ ...fieldState, [_id]: e.target.value })}
 						rows={2}
 						value={fieldState[label]}
 					/>
@@ -85,16 +146,53 @@ const DisplayForm = ({ classes, match }) => {
 			<div className={classes.root}>
 				<Grid container justify="center">
 					<Grid item sm={6} className={classes.flexColumn}>
-						<Typography variant="h4">{title}</Typography>
+						<Typography variant="h4">
+							{responsesOpen ? 'Responses' : staticState.title}
+						</Typography>
+						{currentUser._id === staticState.ownerId && (
+							<div>
+								<Link to={`/form/${formId}`} className={classes.smallLink}>
+									Edit Form
+								</Link>
+								<span
+									onClick={() => setResponsesOpen(!responsesOpen)}
+									className={classes.smallLink}>
+									{responsesOpen ? 'View Form' : 'View Responses'}
+								</span>
+							</div>
+						)}
 						<Divider className={classes.divider} />
-						{formFields.map((field, key) => {
-							return (
-								<div key={key} className={classes.formItem}>
-									{renderField(field)}
-								</div>
-							)
-						})}
+
+						{responsesOpen ? (
+							<div>
+								{formResponses && (
+									<div>
+										{formResponses.map((field, idx) => (
+											<FieldResponse
+												classes={classes}
+												field={field}
+												key={idx}
+											/>
+										))}
+									</div>
+								)}
+							</div>
+						) : (
+							<div>
+								{formFields.map((field, key) => {
+									return (
+										<div key={key} className={classes.formItem}>
+											{renderField(field)}
+										</div>
+									)
+								})}
+								<Button variant="outlined" onClick={handleSubmit}>
+									Submit
+								</Button>
+							</div>
+						)}
 					</Grid>
+					<UIAlerts snackBar={snackBar} handleClose={handleClose} />
 				</Grid>
 			</div>
 		)
@@ -124,6 +222,16 @@ const styles = {
 	},
 	divider: {
 		margin: '15px 0',
+	},
+	smallLink: {
+		color: '#777',
+		display: 'inline-block',
+		marginRight: 10,
+		textDecoration: 'underline',
+		marginTop: 10,
+		fontSize: 14,
+		cursor: 'pointer',
+		fontFamily: 'Roboto',
 	},
 }
 

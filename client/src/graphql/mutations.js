@@ -82,6 +82,16 @@ export const ADD_FIELD_MUTATION = `
   }
 `
 
+export const SUBMIT_FORM_MUTATION = `
+mutation($formId: ID!, $input: [FormFieldResponseInput]) {
+  submitForm(formId: $formId, input: $input) {
+    _id
+    value
+  }
+}
+
+`
+
 export const DELETE_FORM_MUTATION = `
 mutation($formId: ID!) {
   deleteForm(formId: $formId) {

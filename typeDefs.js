@@ -18,17 +18,19 @@ module.exports = gql`
 		formFields: [FormField!]
 	}
 
+	type FormFieldResponse {
+		_id: ID!
+		form: Form
+		formField: FormField
+		value: String
+	}
+
 	type FormField {
 		_id: ID!
 		type: String
 		label: String
 		form: Form
-	}
-
-	type Query {
-		me: User
-		getForms: [Form!]!
-		getForm(_id: ID!): Form!
+		responses: [FormFieldResponse]!
 	}
 
 	input FormInput {
@@ -42,6 +44,19 @@ module.exports = gql`
 		label: String
 	}
 
+	input FormFieldResponseInput {
+		form: ID!
+		formField: ID!
+		value: String
+	}
+
+	type Query {
+		me: User
+		getForms: [Form!]!
+		getForm(_id: ID!): Form!
+		getResponses(formId: ID!): [FormField!]!
+	}
+
 	type Mutation {
 		createForm(input: FormInput!): Form
 		deleteForm(formId: ID!): Form
@@ -50,5 +65,9 @@ module.exports = gql`
 		deleteField(_id: ID!, formId: ID!): FormField
 		updateFormFieldOrder(_id: ID!, formFields: [ID!]!): Form
 		editFormField(_id: ID!, input: FormFieldInput): FormField
+		submitForm(
+			formId: ID!
+			input: [FormFieldResponseInput]
+		): [FormFieldResponse!]!
 	}
 `
