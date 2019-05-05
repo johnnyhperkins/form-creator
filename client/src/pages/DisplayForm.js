@@ -14,15 +14,14 @@ import { GET_FORM_QUERY, GET_RESPONSES_QUERY } from '../graphql/queries'
 import Context from '../context'
 import { useClient } from '../client'
 import FieldResponse from '../components/FieldResponse'
-import UIAlerts from '../components/UIAlerts'
 
 const DisplayForm = ({ classes, match, history }) => {
-	const { state: { currentUser } } = useContext(Context)
+	const { state: { currentUser }, dispatch } = useContext(Context)
 	const [ staticState, setStaticState ] = useState({
 		title: '',
 		ownerId: '',
 	})
-	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
+
 	const [ formFields, setFormFields ] = useState(null)
 	const [ fieldState, setFieldState ] = useState({})
 	const [ responsesOpen, setResponsesOpen ] = useState(false)
@@ -44,14 +43,6 @@ const DisplayForm = ({ classes, match, history }) => {
 		})
 
 		setFieldState(createFieldState)
-	}
-
-	const handleClose = (event, reason) => {
-		if (reason === 'clickaway') {
-			return
-		}
-
-		setSnackBar({ ...snackBar, open: false })
 	}
 
 	const getForm = async () => {
@@ -91,16 +82,14 @@ const DisplayForm = ({ classes, match, history }) => {
 			input: fieldStateArray,
 		}
 
-		setSnackBar({
-			open: true,
-			message: 'Form Submitted',
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Form Submitted' },
 		})
 
-		const { submitForm } = await client.request(SUBMIT_FORM_MUTATION, variables)
+		await client.request(SUBMIT_FORM_MUTATION, variables)
 
 		history.push('/')
-
-		// setFormState(formFields)
 	}
 
 	const renderField = field => {
@@ -192,7 +181,6 @@ const DisplayForm = ({ classes, match, history }) => {
 							</div>
 						)}
 					</Grid>
-					<UIAlerts snackBar={snackBar} handleClose={handleClose} />
 				</Grid>
 			</div>
 		)

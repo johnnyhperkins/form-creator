@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { withRouter, Link } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
@@ -17,8 +17,9 @@ import Select from '@material-ui/core/Select'
 
 import Divider from '@material-ui/core/Divider'
 
+import Context from '../context'
 import AddField from '../components/AddField'
-import UIAlerts from '../components/UIAlerts'
+
 import { FIELD_TYPES } from '../constants'
 import FormField from '../components/FormField'
 import { GET_FORM_QUERY } from '../graphql/queries'
@@ -38,6 +39,7 @@ const FieldContainer = styled.div`
 `
 
 const EditForm = ({ classes, match }) => {
+	const { dispatch } = useContext(Context)
 	const [ title, setTitle ] = useState('')
 	const [ url, setUrl ] = useState('')
 	const [ formFields, setFormFields ] = useState(null)
@@ -50,7 +52,6 @@ const EditForm = ({ classes, match }) => {
 	const [ newFieldType, setNewFieldType ] = useState('')
 
 	const [ drawerOpen, setDrawerOpen ] = useState(false)
-	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 
 	const { id: formId } = match.params
 
@@ -72,21 +73,16 @@ const EditForm = ({ classes, match }) => {
 		setFormFields(formFields)
 	}
 
-	const handleClose = (event, reason) => {
-		if (reason === 'clickaway') {
-			return
-		}
-
-		setSnackBar({ ...snackBar, open: false })
-	}
-
 	const handleUpdateForm = async () => {
 		await client.request(UPDATE_FORM_MUTATION, {
 			_id: formId,
 			title,
 		})
 		setEditTitle(false)
-		setSnackBar({ open: true, message: 'Saved' })
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Saved' },
+		})
 	}
 
 	const reorder = (list, startIndex, endIndex) => {
@@ -127,7 +123,11 @@ const EditForm = ({ classes, match }) => {
 		setLabel('')
 		setType('')
 		setFieldId('')
-		setSnackBar({ open: true, message: 'Field updated' })
+
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Field updated' },
+		})
 	}
 
 	const handleAddFormField = async () => {
@@ -140,7 +140,10 @@ const EditForm = ({ classes, match }) => {
 		setFormFields([ ...formFields, addFormField ])
 		setNewFieldLabel('')
 		setNewFieldType('')
-		setSnackBar({ open: true, message: 'Field added' })
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Field added' },
+		})
 	}
 
 	const deleteField = async _id => {
@@ -150,9 +153,9 @@ const EditForm = ({ classes, match }) => {
 		})
 
 		setFormFields(formFields.filter(field => field._id !== _id))
-		setSnackBar({
-			open: true,
-			message: 'Field Deleted',
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Field deleted' },
 		})
 	}
 
@@ -179,7 +182,10 @@ const EditForm = ({ classes, match }) => {
 		})
 
 		setFormFields(newFields)
-		setSnackBar({ open: true, message: 'Updated' })
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Updated' },
+		})
 	}
 
 	const renderTitle = bool => {
@@ -311,7 +317,6 @@ const EditForm = ({ classes, match }) => {
 							</Button>
 						</div>
 					</Drawer>
-					<UIAlerts snackBar={snackBar} handleClose={handleClose} />
 				</Grid>
 			</div>
 		)

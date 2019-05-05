@@ -19,6 +19,12 @@ export default function reducer(state, { type, payload }) {
 				isAuth: false,
 			}
 
+		case 'SNACKBAR':
+			return {
+				...state,
+				ui: payload,
+			}
+
 		default:
 			return state
 	}

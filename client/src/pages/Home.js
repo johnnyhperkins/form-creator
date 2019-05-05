@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { withRouter } from 'react-router-dom'
 
 import Grid from '@material-ui/core/Grid'
@@ -15,7 +15,7 @@ import ListItemText from '@material-ui/core/ListItemText'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 import { ListItemIcon } from '@material-ui/core'
 
-import UIAlerts from '../components/UIAlerts'
+import Context from '../context'
 import {
 	CREATE_FORM_MUTATION,
 	DELETE_FORM_MUTATION,
@@ -24,8 +24,8 @@ import { GET_FORMS_QUERY } from '../graphql/queries'
 import { useClient } from '../client'
 
 const Home = ({ classes, history }) => {
+	const { dispatch } = useContext(Context)
 	const [ addForm, setAddForm ] = useState(false)
-	const [ snackBar, setSnackBar ] = useState({ open: false, message: null })
 	const [ title, setTitle ] = useState('')
 	const [ forms, setForms ] = useState(null)
 	const client = useClient()
@@ -39,23 +39,25 @@ const Home = ({ classes, history }) => {
 		setForms([ ...forms, createForm ])
 		setAddForm(false)
 		setTitle('')
-		setSnackBar({ open: true, message: 'Form added' })
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Form Added' },
+		})
 	}
 
 	const handleClick = id => {
 		history.push(`/form/${id}`)
 	}
 
-	const handleClose = (event, reason) => {
-		if (reason === 'clickaway') return
-
-		setSnackBar({ ...snackBar, open: false })
-	}
-
 	const handleDeleteForm = async id => {
 		await client.request(DELETE_FORM_MUTATION, { formId: id })
 		setForms(forms.filter(form => form._id !== id))
-		setSnackBar({ open: true, message: 'Form deleted' })
+
+		//to do: Add a confirmation modal that alerts all fields and responses will also be deleted
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: true, message: 'Form Deleted' },
+		})
 	}
 
 	const getForms = async () => {
@@ -117,7 +119,6 @@ const Home = ({ classes, history }) => {
 					</Grid>
 				)}
 			</Grid>
-			<UIAlerts snackBar={snackBar} handleClose={handleClose} />
 		</div>
 	)
 }

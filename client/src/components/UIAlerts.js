@@ -1,17 +1,31 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Snackbar from '@material-ui/core/Snackbar'
 import IconButton from '@material-ui/core/IconButton'
 import CheckCircleIcon from '@material-ui/icons/CheckCircle'
 import { withStyles } from '@material-ui/core/styles'
+import Context from '../context'
 
-const UIAlerts = ({ classes, snackBar, handleClose }) => {
+const UIAlerts = ({ classes }) => {
+	const { dispatch, state: { ui: { snackBarOpen, message } } } = useContext(
+		Context,
+	)
+
+	const handleClose = (event, reason) => {
+		if (reason === 'clickaway') {
+			return
+		}
+		dispatch({
+			type: 'SNACKBAR',
+			payload: { snackBarOpen: false, message: '' },
+		})
+	}
 	return (
 		<Snackbar
 			anchorOrigin={{
 				vertical: 'bottom',
 				horizontal: 'left',
 			}}
-			open={snackBar.open}
+			open={snackBarOpen}
 			autoHideDuration={2000}
 			onClose={handleClose}
 			ContentProps={{
@@ -19,7 +33,7 @@ const UIAlerts = ({ classes, snackBar, handleClose }) => {
 			}}
 			message={
 				<span id="message-id" className={classes.snackbarMessage}>
-					{snackBar.message}
+					{message}
 				</span>
 			}
 			action={[
