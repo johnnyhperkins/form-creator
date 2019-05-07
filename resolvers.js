@@ -53,17 +53,10 @@ module.exports = {
 				form: ObjectId(response.form),
 				formField: ObjectId(response.formField),
 			}))
-			return FormFieldResponse.collection
-				.insertMany(responses)
-				.then(result => {
-					return result.ops
-				})
-				.catch(err => {
-					throw new ApolloError(
-						`Operation failed. Error code ${err.response.errors[0].extensions
-							.code}`,
-					)
-				})
+
+			return FormFieldResponse.collection.insertMany(responses).then(result => {
+				return result.ops
+			})
 		},
 
 		createForm: authenticated(async (root, args, ctx) => {
@@ -97,6 +90,9 @@ module.exports = {
 
 		deleteField: authenticated(async (root, { _id, formId }) => {
 			await FormField.findByIdAndRemove(_id)
+			await FormFieldResponse.deleteMany({
+				formField: _id,
+			})
 			await Form.findOneAndUpdate(
 				{ _id: formId },
 				{ $pull: { formFields: _id } },

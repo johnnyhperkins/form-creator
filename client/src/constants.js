@@ -10,7 +10,6 @@ const FORM_ELEMENTS = {
 const FIELD_TYPES = {
 	TEXT: 'Text',
 	TEXT_AREA: 'Text Area',
-	BUTTON: 'Button',
 }
 
 const ATTRIBUTES = {

@@ -5,7 +5,6 @@ import TextField from '@material-ui/core/TextField'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 import EditIcon from '@material-ui/icons/Edit'
 import DehazeIcon from '@material-ui/icons/Dehaze'
-import Button from '@material-ui/core/Button'
 import styled from 'styled-components'
 
 const Field = styled.div``
@@ -14,7 +13,7 @@ const FormField = ({
 	classes,
 	field,
 	provided,
-	deleteField,
+	setIdToDelete,
 	startUpdateField,
 }) => {
 	const renderField = field => {
@@ -32,12 +31,6 @@ const FormField = ({
 						variant="outlined"
 						label={field.label}
 					/>
-				)
-			case 'Button':
-				return (
-					<Button disabled variant="outlined">
-						{field.label}
-					</Button>
 				)
 			default:
 				return null
@@ -60,7 +53,7 @@ const FormField = ({
 						className={classes.editIcon}
 					/>{' '}
 					<DeleteIcon
-						onClick={() => deleteField(field._id)}
+						onClick={() => setIdToDelete(field._id)}
 						className={classes.deleteIcon}
 					/>
 				</div>

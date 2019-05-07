@@ -24,6 +24,7 @@ export const GET_RESPONSES_QUERY = `query($formId: ID!) {
     responses {
       _id
       value
+      user
     }
     
   }

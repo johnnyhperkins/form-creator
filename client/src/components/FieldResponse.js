@@ -21,7 +21,7 @@ const FieldResponse = ({ classes, field }) => {
 						<ListItem key={idx}>
 							<ListItemText
 								primary={res.value}
-								secondary={renderDate(res._id)}
+								secondary={`${res.user} at ${renderDate(res._id)}`}
 							/>
 						</ListItem>
 					)

@@ -55,6 +55,7 @@ const Home = ({ classes, history }) => {
 			const { createForm } = await client.request(CREATE_FORM_MUTATION, {
 				title,
 			})
+
 			setForms([ ...forms, createForm ])
 			setAddForm(false)
 			setTitle('')
@@ -93,6 +94,7 @@ const Home = ({ classes, history }) => {
 				type: 'SNACKBAR',
 				payload: { snackBarOpen: true, message: 'Form Deleted' },
 			})
+
 			setIdToDelete(null)
 		} catch (err) {
 			handleError(err, dispatch)
@@ -101,6 +103,7 @@ const Home = ({ classes, history }) => {
 
 	const getForms = async () => {
 		const { getForms } = await client.request(GET_FORMS_QUERY)
+
 		setForms(getForms)
 	}
 

@@ -50,6 +50,7 @@ const EditForm = ({ classes, match, history }) => {
 	const [ editTitle, setEditTitle ] = useState(false)
 	const [ newFieldLabel, setNewFieldLabel ] = useState('')
 	const [ newFieldType, setNewFieldType ] = useState('')
+	const [ idToDelete, setIdToDelete ] = useState(null)
 
 	const [ drawerOpen, setDrawerOpen ] = useState(false)
 
@@ -65,6 +66,15 @@ const EditForm = ({ classes, match, history }) => {
 		}
 	}, [])
 
+	useEffect(
+		() => {
+			if (idToDelete) {
+				confirmDelete()
+			}
+		},
+		[ idToDelete ],
+	)
+
 	const getForm = async () => {
 		const {
 			getForm: { title, url, formFields },
@@ -75,6 +85,19 @@ const EditForm = ({ classes, match, history }) => {
 		setUrl(url)
 		setTitle(title)
 		setFormFields(formFields)
+	}
+
+	const confirmDelete = () => {
+		dispatch({
+			type: 'TOGGLE_WARNING_MODAL',
+			payload: {
+				modalOpen: true,
+				title: 'Are you sure you want to delete this field?',
+				message:
+					'All associated responses will be permanently deleted as well.',
+				action: deleteField,
+			},
+		})
 	}
 
 	const handleUpdateForm = async () => {
@@ -166,14 +189,15 @@ const EditForm = ({ classes, match, history }) => {
 		}
 	}
 
-	const deleteField = async _id => {
+	const deleteField = async () => {
 		try {
 			await client.request(DELETE_FIELD_MUTATION, {
-				_id,
+				_id: idToDelete,
 				formId,
 			})
 
-			setFormFields(formFields.filter(field => field._id !== _id))
+			setFormFields(formFields.filter(field => field._id !== idToDelete))
+			setIdToDelete(null)
 			dispatch({
 				type: 'SNACKBAR',
 				payload: { snackBarOpen: true, message: 'Field deleted' },
@@ -269,7 +293,7 @@ const EditForm = ({ classes, match, history }) => {
 														index={idx}>
 														{provided => (
 															<FormField
-																deleteField={deleteField}
+																setIdToDelete={setIdToDelete}
 																startUpdateField={startUpdateField}
 																field={field}
 																formId={formId}

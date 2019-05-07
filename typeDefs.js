@@ -21,7 +21,7 @@ module.exports = gql`
 	type FormFieldResponse {
 		_id: ID!
 		form: Form
-		user: User
+		user: String
 		formField: FormField
 		value: String
 	}
@@ -49,7 +49,7 @@ module.exports = gql`
 	input FormFieldResponseInput {
 		form: ID!
 		formField: ID!
-		user: ID
+		user: String
 		value: String
 	}
 
@@ -67,9 +67,6 @@ module.exports = gql`
 		addFormField(formId: ID!, input: FormFieldInput): FormField
 		updateFormField(_id: ID!, input: FormFieldInput): FormField
 		deleteField(_id: ID!, formId: ID!): FormField
-		submitForm(
-			formId: ID!
-			input: [FormFieldResponseInput]
-		): [FormFieldResponse!]!
+		submitForm(input: [FormFieldResponseInput]): [FormFieldResponse!]!
 	}
 `

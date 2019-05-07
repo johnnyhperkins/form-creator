@@ -22,7 +22,6 @@ const DisplayForm = ({ classes, match, history }) => {
 		title: '',
 		ownerId: '',
 	})
-
 	const [ formFields, setFormFields ] = useState(null)
 	const [ fieldState, setFieldState ] = useState({})
 	const [ responsesOpen, setResponsesOpen ] = useState(false)
@@ -57,44 +56,50 @@ const DisplayForm = ({ classes, match, history }) => {
 		} = await client.request(GET_FORM_QUERY, {
 			_id: formId,
 		})
+
 		setStaticState({
 			title,
 			ownerId: _id,
 		})
-
 		setFormFields(formFields)
 		setFormState(formFields)
 
 		if (_id === currentUser._id) {
-			const { getResponses } = await client.request(GET_RESPONSES_QUERY, {
-				formId,
-			})
+			try {
+				const { getResponses } = await client.request(GET_RESPONSES_QUERY, {
+					formId,
+				})
 
-			if (getResponses.length) {
-				setFormResponses(getResponses)
+				if (getResponses.length) {
+					setFormResponses(getResponses)
+				}
+			} catch (err) {
+				handleError(err, dispatch)
 			}
 		}
 	}
 
 	const handleSubmit = async () => {
-		const fieldStateArray = Object.keys(fieldState).map(key => ({
-			form: formId,
-			formField: key,
-			value: fieldState[key],
-		}))
+		try {
+			const user = currentUser ? currentUser.name : 'Anonymous'
+			const input = Object.keys(fieldState).map(key => ({
+				form: formId,
+				formField: key,
+				user,
+				value: fieldState[key],
+			}))
 
-		const variables = {
-			input: fieldStateArray,
+			await client.request(SUBMIT_FORM_MUTATION, { input })
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Form Submitted' },
+			})
+
+			history.push('/')
+		} catch (err) {
+			handleError(err, dispatch)
 		}
-
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Form Submitted' },
-		})
-
-		await client.request(SUBMIT_FORM_MUTATION, variables)
-
-		history.push('/')
 	}
 
 	const renderField = field => {
