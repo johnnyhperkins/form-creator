@@ -1,4 +1,4 @@
-const { AuthenticationError } = require('apollo-server')
+const { AuthenticationError, ApolloError } = require('apollo-server')
 const Form = require('./models/Form')
 const FormField = require('./models/FormField')
 const FormFieldResponse = require('./models/FormFieldResponse')
@@ -14,7 +14,9 @@ const authenticated = next => (root, args, ctx, info) => {
 module.exports = {
 	Query: {
 		me: authenticated((root, args, ctx) => ctx.currentUser),
+
 		getResponses: authenticated(async (root, { formId }) => {
+			// to do: figure out how to best authenticate if the user requesting the responses is the author of the form
 			return FormField.aggregate([
 				{ $match: { form: ObjectId(formId) } },
 				{
@@ -29,32 +31,23 @@ module.exports = {
 		}),
 
 		getForms: authenticated(async (root, args, ctx) => {
-			const forms = await Form.find(
-				{
-					createdBy: ctx.currentUser._id,
-				},
-				err => {
-					if (err) console.log('getform error:', err)
-				},
-			).populate('createdBy')
+			const forms = await Form.find({ createdBy: ctx.currentUser._id })
 
 			return forms
 		}),
 
 		getForm: authenticated(async (root, { _id }, ctx) => {
-			const form = await Form.findOne(
-				{ _id, createdBy: ctx.currentUser._id },
-				err => {
-					if (err) console.log('getform error:', err)
-				},
-			).populate('formFields')
+			const form = await Form.findOne({
+				_id,
+				createdBy: ctx.currentUser._id,
+			}).populate('formFields')
 
 			return form
 		}),
 	},
 
 	Mutation: {
-		async submitForm(root, { formId, input }) {
+		async submitForm(root, { input }) {
 			const responses = input.map(response => ({
 				...response,
 				form: ObjectId(response.form),
@@ -65,53 +58,51 @@ module.exports = {
 				.then(result => {
 					return result.ops
 				})
-				.catch(err => console.error(`Failed to insert documents ${err}`))
+				.catch(err => {
+					throw new ApolloError(
+						`Operation failed. Error code ${err.response.errors[0].extensions
+							.code}`,
+					)
+				})
 		},
+
 		createForm: authenticated(async (root, args, ctx) => {
 			const newForm = new Form({
 				...args.input,
 				createdBy: ctx.currentUser._id,
 			})
 			newForm.url = `/${ctx.currentUser.name.replace(/ /g, '')}/${newForm._id}`
-			await newForm.save()
-			const formAdded = await Form.populate(newForm, 'createdBy')
 
-			return formAdded
+			return await newForm.save()
 		}),
-		deleteForm: authenticated(async (root, { formId }, ctx) => {
-			const formDeleted = await Form.findOneAndDelete({
-				_id: formId,
-			}).exec()
-			await FormField.deleteMany({
-				form: formId,
-			})
-			await FormFieldResponse.deleteMany({
-				form: formId,
-			})
-			return formDeleted
-		}),
-		updateForm: authenticated(async (root, { _id, input }, ctx) => {
-			return await Form.findOneAndUpdate(
-				{
+
+		deleteForm: authenticated(async (root, { formId: _id }, ctx) => {
+			try {
+				await Form.findOneAndDelete({
 					_id,
-				},
-				input,
-				{
-					new: true,
-				},
-			)
+					createdBy: ObjectId(ctx.currentUser._id),
+				})
+				await FormField.deleteMany({
+					form: _id,
+				})
+				await FormFieldResponse.deleteMany({
+					form: _id,
+				})
+			} catch (err) {
+				throw new AuthenticationError(
+					'You are not authorized to delete this form',
+				)
+			}
 		}),
-		deleteField: authenticated(async (root, { _id, formId }, ctx) => {
-			await FormField.findByIdAndRemove(_id, err => console.log(err))
+
+		deleteField: authenticated(async (root, { _id, formId }) => {
+			await FormField.findByIdAndRemove(_id)
 			await Form.findOneAndUpdate(
 				{ _id: formId },
 				{ $pull: { formFields: _id } },
-				{ new: true },
-				err => {
-					if (err) console.log('getform error:', err)
-				},
 			)
 		}),
+
 		addFormField: authenticated(async (root, { formId, input }) => {
 			const formField = await new FormField({
 				...input,
@@ -122,31 +113,22 @@ module.exports = {
 				{
 					_id: formId,
 				},
-				{ $push: { formFields: formField._id } },
+				{ $addToSet: { formFields: formField._id } },
 				{ new: true },
 			)
 
 			return formField
 		}),
-		editFormField: authenticated(async (root, { _id, input }, ctx) => {
-			await FormField.findOneAndUpdate({ _id }, input, err => {
-				if (err) console.log('getform error:', err)
-			})
+
+		updateFormField: authenticated(async (root, { _id, input }, ctx) => {
+			await FormField.findOneAndUpdate({ _id }, input)
 		}),
-		updateFormFieldOrder: authenticated(
-			async (root, { _id, formFields }, ctx) => {
-				await Form.findOneAndUpdate(
-					{
-						_id,
-					},
-					{
-						formFields,
-					},
-					err => {
-						if (err) console.log('getform error:', err)
-					},
-				)
-			},
-		),
+
+		updateForm: authenticated(async (root, { _id, input }, ctx) => {
+			await Form.findOneAndUpdate(
+				{ _id, createdBy: ctx.currentUser._id },
+				input,
+			)
+		}),
 	},
 }

@@ -15,6 +15,7 @@ import ListItemText from '@material-ui/core/ListItemText'
 import DeleteIcon from '@material-ui/icons/DeleteTwoTone'
 import { ListItemIcon } from '@material-ui/core'
 
+import handleError from '../utils/handleError'
 import Context from '../context'
 import {
 	CREATE_FORM_MUTATION,
@@ -28,36 +29,74 @@ const Home = ({ classes, history }) => {
 	const [ addForm, setAddForm ] = useState(false)
 	const [ title, setTitle ] = useState('')
 	const [ forms, setForms ] = useState(null)
+	const [ idToDelete, setIdToDelete ] = useState(null)
+
 	const client = useClient()
 
 	useEffect(() => {
-		getForms()
+		try {
+			getForms()
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}, [])
 
+	useEffect(
+		() => {
+			if (idToDelete) {
+				confirmDelete()
+			}
+		},
+		[ idToDelete ],
+	)
+
 	const handleSubmit = async () => {
-		const { createForm } = await client.request(CREATE_FORM_MUTATION, { title })
-		setForms([ ...forms, createForm ])
-		setAddForm(false)
-		setTitle('')
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Form Added' },
-		})
+		try {
+			const { createForm } = await client.request(CREATE_FORM_MUTATION, {
+				title,
+			})
+			setForms([ ...forms, createForm ])
+			setAddForm(false)
+			setTitle('')
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Form Added' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const handleClick = id => {
 		history.push(`/form/${id}`)
 	}
 
-	const handleDeleteForm = async id => {
-		await client.request(DELETE_FORM_MUTATION, { formId: id })
-		setForms(forms.filter(form => form._id !== id))
-
-		//to do: Add a confirmation modal that alerts all fields and responses will also be deleted
+	const confirmDelete = () => {
 		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Form Deleted' },
+			type: 'TOGGLE_WARNING_MODAL',
+			payload: {
+				modalOpen: true,
+				title: 'Are you sure you want to delete this form?',
+				message: 'All fields and responses will be permanently deleted.',
+				action: handleDeleteForm,
+			},
 		})
+	}
+
+	const handleDeleteForm = async () => {
+		try {
+			await client.request(DELETE_FORM_MUTATION, { formId: idToDelete })
+			setForms(forms.filter(form => form._id !== idToDelete))
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Form Deleted' },
+			})
+			setIdToDelete(null)
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const getForms = async () => {
@@ -83,7 +122,7 @@ const Home = ({ classes, history }) => {
 												<EditIcon />
 											</ListItemIcon>
 											<ListItemText primary={form.title} />
-											<Button onClick={() => handleDeleteForm(form._id)}>
+											<Button onClick={() => setIdToDelete(form._id)}>
 												<DeleteIcon className={classes.deleteIcon} />
 											</Button>
 										</ListItem>

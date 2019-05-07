@@ -18,7 +18,7 @@
 		"mongoose": "^5.5.5",
 		"react": "^16.8.6",
 		"react-apollo": "^2.4.0",
-		"react-beautiful-dnd": "^11.0.0",
+		"react-beautiful-dnd": "^11.0.2",
 		"react-dom": "^16.8.6",
 		"react-google-login": "^5.0.0",
 		"react-router-dom": "^4.3.1",

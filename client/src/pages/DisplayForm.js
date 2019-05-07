@@ -14,6 +14,7 @@ import { GET_FORM_QUERY, GET_RESPONSES_QUERY } from '../graphql/queries'
 import Context from '../context'
 import { useClient } from '../client'
 import FieldResponse from '../components/FieldResponse'
+import handleError from '../utils/handleError'
 
 const DisplayForm = ({ classes, match, history }) => {
 	const { state: { currentUser }, dispatch } = useContext(Context)
@@ -32,7 +33,12 @@ const DisplayForm = ({ classes, match, history }) => {
 	const client = useClient()
 
 	useEffect(() => {
-		getForm()
+		try {
+			getForm()
+		} catch (err) {
+			handleError(err, dispatch)
+			history.push('/')
+		}
 	}, [])
 
 	const setFormState = formFields => {
@@ -78,7 +84,6 @@ const DisplayForm = ({ classes, match, history }) => {
 		}))
 
 		const variables = {
-			formId,
 			input: fieldStateArray,
 		}
 

@@ -10,6 +10,7 @@ export const useClient = () => {
 		.getAuthInstance()
 		.currentUser.get()
 		.getAuthResponse().id_token
+
 	return new GraphQLClient(BASE_URL, {
 		headers: { authorization: idToken },
 	})

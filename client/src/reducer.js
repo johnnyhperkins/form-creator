@@ -25,6 +25,11 @@ export default function reducer(state, { type, payload }) {
 				ui: payload,
 			}
 
+		case 'TOGGLE_WARNING_MODAL':
+			return {
+				...state,
+				warningModal: payload,
+			}
 		default:
 			return state
 	}

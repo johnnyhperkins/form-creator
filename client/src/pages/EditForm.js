@@ -14,6 +14,7 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
+import handleError from '../utils/handleError'
 
 import Divider from '@material-ui/core/Divider'
 
@@ -25,9 +26,8 @@ import FormField from '../components/FormField'
 import { GET_FORM_QUERY } from '../graphql/queries'
 import {
 	UPDATE_FORM_MUTATION,
-	ADD_FIELD_MUTATION,
-	EDIT_FIELD_MUTATION,
-	UPDATE_FORMFIELD_ORDER,
+	CREATE_FIELD_MUTATION,
+	UPDATE_FIELD_MUTATION,
 	DELETE_FIELD_MUTATION,
 } from '../graphql/mutations'
 
@@ -38,7 +38,7 @@ const FieldContainer = styled.div`
 	margin-bottom: 10px;
 `
 
-const EditForm = ({ classes, match }) => {
+const EditForm = ({ classes, match, history }) => {
 	const { dispatch } = useContext(Context)
 	const [ title, setTitle ] = useState('')
 	const [ url, setUrl ] = useState('')
@@ -58,7 +58,11 @@ const EditForm = ({ classes, match }) => {
 	const client = useClient()
 
 	useEffect(() => {
-		getForm()
+		try {
+			getForm()
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}, [])
 
 	const getForm = async () => {
@@ -74,15 +78,21 @@ const EditForm = ({ classes, match }) => {
 	}
 
 	const handleUpdateForm = async () => {
-		await client.request(UPDATE_FORM_MUTATION, {
-			_id: formId,
-			title,
-		})
-		setEditTitle(false)
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Saved' },
-		})
+		try {
+			await client.request(UPDATE_FORM_MUTATION, {
+				_id: formId,
+				title,
+			})
+			setEditTitle(false)
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Saved' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+			history.push('/')
+		}
 	}
 
 	const reorder = (list, startIndex, endIndex) => {
@@ -101,62 +111,76 @@ const EditForm = ({ classes, match }) => {
 	}
 
 	const handleUpdateField = async () => {
-		await client.request(EDIT_FIELD_MUTATION, {
-			_id: fieldId,
-			type,
-			label,
-		})
+		try {
+			await client.request(UPDATE_FIELD_MUTATION, {
+				_id: fieldId,
+				type,
+				label,
+			})
 
-		const updatedFormFields = formFields.map(field => {
-			if (field._id === fieldId) {
-				return {
-					...field,
-					type,
-					label,
+			const updatedFormFields = formFields.map(field => {
+				if (field._id === fieldId) {
+					return {
+						...field,
+						type,
+						label,
+					}
 				}
-			}
-			return field
-		})
 
-		setFormFields(updatedFormFields)
-		setDrawerOpen(!drawerOpen)
-		setLabel('')
-		setType('')
-		setFieldId('')
+				return field
+			})
 
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Field updated' },
-		})
+			setFormFields(updatedFormFields)
+			setDrawerOpen(!drawerOpen)
+			setLabel('')
+			setType('')
+			setFieldId('')
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Field updated' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const handleAddFormField = async () => {
-		const { addFormField } = await client.request(ADD_FIELD_MUTATION, {
-			formId,
-			type: newFieldType,
-			label: newFieldLabel,
-		})
+		try {
+			const { addFormField } = await client.request(CREATE_FIELD_MUTATION, {
+				formId,
+				type: newFieldType,
+				label: newFieldLabel,
+			})
 
-		setFormFields([ ...formFields, addFormField ])
-		setNewFieldLabel('')
-		setNewFieldType('')
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Field added' },
-		})
+			setFormFields([ ...formFields, addFormField ])
+			setNewFieldLabel('')
+			setNewFieldType('')
+
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Field added' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const deleteField = async _id => {
-		await client.request(DELETE_FIELD_MUTATION, {
-			_id,
-			formId,
-		})
+		try {
+			await client.request(DELETE_FIELD_MUTATION, {
+				_id,
+				formId,
+			})
 
-		setFormFields(formFields.filter(field => field._id !== _id))
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Field deleted' },
-		})
+			setFormFields(formFields.filter(field => field._id !== _id))
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Field deleted' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const onDragEnd = async result => {
@@ -176,16 +200,21 @@ const EditForm = ({ classes, match }) => {
 		)
 
 		const fieldIds = newFields.map(field => field._id)
-		await client.request(UPDATE_FORMFIELD_ORDER, {
-			_id: formId,
-			formFields: fieldIds,
-		})
 
-		setFormFields(newFields)
-		dispatch({
-			type: 'SNACKBAR',
-			payload: { snackBarOpen: true, message: 'Updated' },
-		})
+		try {
+			await client.request(UPDATE_FORM_MUTATION, {
+				_id: formId,
+				formFields: fieldIds,
+			})
+
+			setFormFields(newFields)
+			dispatch({
+				type: 'SNACKBAR',
+				payload: { snackBarOpen: true, message: 'Updated' },
+			})
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const renderTitle = bool => {

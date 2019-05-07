@@ -13,11 +13,7 @@ const AppRouter = () => {
 		<Router>
 			<Switch>
 				<ProtectedRoute exact path="/form/:id" component={EditForm} />
-				<ProtectedRoute
-					exact
-					path="/:username/:form_id"
-					component={DisplayForm}
-				/>
+				<Route exact path="/:username/:form_id" component={DisplayForm} />
 				<ProtectedRoute exact path="/" component={Home} />
 				<Route path="/login" component={Splash} />
 			</Switch>
