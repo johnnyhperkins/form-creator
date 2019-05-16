@@ -1,5 +1,4 @@
 import { GraphQLClient } from 'graphql-request'
-// import handleError from './utils/handleError'
 
 export const BASE_URL =
 	process.env.NODE_ENV === 'production'
@@ -8,18 +7,20 @@ export const BASE_URL =
 
 export const useClient = () => {
 	try {
-		// if (window.gapi) {
-		const idToken = window.gapi.auth2
-			.getAuthInstance()
-			.currentUser.get()
-			.getAuthResponse().id_token
+		if (window.gapi) {
+			const idToken = window.gapi.auth2
+				.getAuthInstance()
+				.currentUser.get()
+				.getAuthResponse().id_token
 
-		return new GraphQLClient(BASE_URL, {
-			headers: { authorization: idToken },
-		})
+			return new GraphQLClient(BASE_URL, {
+				headers: { authorization: idToken },
+			})
+		}
+
+		return new GraphQLClient(BASE_URL)
 	} catch (err) {
 		console.log(err)
 		window.location = '/'
-		// handleError(err)
 	}
 }

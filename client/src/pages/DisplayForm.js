@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { withRouter, Link } from 'react-router-dom'
 
 import Grid from '@material-ui/core/Grid'
-
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
@@ -15,6 +13,7 @@ import Context from '../context'
 import { useClient } from '../client'
 import FieldResponse from '../components/FieldResponse'
 import handleError from '../utils/handleError'
+import Link from '../components/misc/Link'
 
 const DisplayForm = ({ classes, match, history }) => {
 	const { state: { currentUser }, dispatch } = useContext(Context)
@@ -29,6 +28,7 @@ const DisplayForm = ({ classes, match, history }) => {
 
 	const { form_id: formId } = match.params
 
+	// need to change this to use a public client for just displaying the form!!
 	const client = useClient()
 
 	useEffect(() => {
@@ -64,7 +64,7 @@ const DisplayForm = ({ classes, match, history }) => {
 		setFormFields(formFields)
 		setFormState(formFields)
 
-		if (_id === currentUser._id) {
+		if (currentUser && _id === currentUser._id) {
 			try {
 				const { getResponses } = await client.request(GET_RESPONSES_QUERY, {
 					formId,
@@ -96,7 +96,7 @@ const DisplayForm = ({ classes, match, history }) => {
 				payload: { snackBarOpen: true, message: 'Form Submitted' },
 			})
 
-			history.push('/')
+			history.push('/submission-successful')
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -148,9 +148,10 @@ const DisplayForm = ({ classes, match, history }) => {
 						<Typography variant="h4">
 							{responsesOpen ? 'Responses' : staticState.title}
 						</Typography>
-						{currentUser._id === staticState.ownerId && (
+						{currentUser &&
+						currentUser._id === staticState.ownerId && (
 							<div>
-								<Link to={`/form/${formId}`} className={classes.smallLink}>
+								<Link to={`/form/${formId}`} small="true">
 									Edit Form
 								</Link>
 								<span
@@ -218,9 +219,6 @@ const styles = {
 	submitButton: {
 		marginTop: 15,
 	},
-	divider: {
-		margin: '15px 0',
-	},
 	smallLink: {
 		color: '#777',
 		display: 'inline-block',
@@ -231,6 +229,9 @@ const styles = {
 		cursor: 'pointer',
 		fontFamily: 'Roboto',
 	},
+	divider: {
+		margin: '15px 0',
+	},
 }
 
-export default withRouter(withStyles(styles)(DisplayForm))
+export default withStyles(styles)(DisplayForm)

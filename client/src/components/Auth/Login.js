@@ -65,7 +65,7 @@ const Login = ({ classes }) => {
 
 const styles = {
 	root: {
-		height: '100vh',
+		height: 'calc(100vh - 64px)',
 		display: 'flex',
 		justifyContent: 'center',
 		flexDirection: 'column',

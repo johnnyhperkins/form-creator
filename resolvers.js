@@ -16,7 +16,7 @@ module.exports = {
 		me: authenticated((root, args, ctx) => ctx.currentUser),
 
 		getResponses: authenticated(async (root, { formId }) => {
-			// to do: figure out how to best authenticate if the user requesting the responses is the author of the form
+			// to do: figure out how to best authenticate if the user requesting the responses is the author of the form (for serverside validation) and if it's even necessary
 			return FormField.aggregate([
 				{ $match: { form: ObjectId(formId) } },
 				{
@@ -36,14 +36,14 @@ module.exports = {
 			return forms
 		}),
 
-		getForm: authenticated(async (root, { _id }, ctx) => {
+		async getForm(root, { _id }) {
 			const form = await Form.findOne({
 				_id,
-				createdBy: ctx.currentUser._id,
+				// createdBy: ctx.currentUser._id, //potentially put back in for server side validation or is the fact the edit route already has auth protection enough?
 			}).populate('formFields')
 
 			return form
-		}),
+		},
 	},
 
 	Mutation: {

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { Link } from 'react-router-dom'
+import Link from './misc/Link'
 import { withStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
@@ -17,7 +17,13 @@ const Header = ({ classes }) => {
 				<Link to="/">
 					<Logo />
 				</Link>
-				<SignOut currentUser={currentUser} />
+				{currentUser ? (
+					<SignOut currentUser={currentUser} />
+				) : (
+					<Link to="/login" color="white">
+						Log In
+					</Link>
+				)}
 			</Toolbar>
 		</AppBar>
 	)

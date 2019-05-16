@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { withRouter, Link } from 'react-router-dom'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import styled from 'styled-components'
@@ -15,6 +14,7 @@ import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
 import handleError from '../utils/handleError'
+import Link from '../components/misc/Link'
 
 import Divider from '@material-ui/core/Divider'
 
@@ -274,7 +274,7 @@ const EditForm = ({ classes, match, history }) => {
 				<Grid container justify="center">
 					<Grid item sm={6}>
 						{renderTitle(editTitle)}
-						<Link to={url} className={classes.smallLink}>
+						<Link to={url} small="true">
 							View Form
 						</Link>
 						<Divider className={classes.divider} />
@@ -389,13 +389,6 @@ const styles = {
 		textTransform: 'uppercase',
 		fontWeight: 'bold',
 	},
-	smallLink: {
-		color: '#777',
-		display: 'block',
-		marginTop: 10,
-		fontSize: 14,
-		fontFamily: 'Roboto',
-	},
 	drawer: {
 		width: '350px',
 		padding: '35px',
@@ -428,4 +421,4 @@ const styles = {
 	},
 }
 
-export default withRouter(withStyles(styles)(EditForm))
+export default withStyles(styles)(EditForm)

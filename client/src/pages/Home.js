@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { withRouter } from 'react-router-dom'
 
 import Grid from '@material-ui/core/Grid'
 import Divider from '@material-ui/core/Divider'
@@ -118,7 +117,7 @@ const Home = ({ classes, history }) => {
 							{forms.length ? (
 								forms.map(form => {
 									return (
-										<ListItem className={classes.formItem} key={form._id}>
+										<ListItem key={form._id}>
 											<ListItemIcon
 												className={classes.pointer}
 												onClick={() => handleClick(form._id)}>
@@ -196,4 +195,4 @@ const styles = {
 	},
 }
 
-export default withRouter(withStyles(styles)(Home))
+export default withStyles(styles)(Home)
