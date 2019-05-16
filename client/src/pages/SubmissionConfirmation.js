@@ -27,7 +27,7 @@ const SubmissionConfirmation = ({ classes }) => {
 						Back to form list
 					</Link>
 				) : (
-					<Link variant="body1" to="/signup">
+					<Link variant="body1" to="/login">
 						Create an account
 					</Link>
 				)}

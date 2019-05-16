@@ -16,6 +16,7 @@ import Select from '@material-ui/core/Select'
 import handleError from '../utils/handleError'
 import Link from '../components/misc/Link'
 
+import { snackbarMessage } from '../utils/snackbarMessage'
 import Divider from '@material-ui/core/Divider'
 
 import Context from '../context'
@@ -108,22 +109,11 @@ const EditForm = ({ classes, match, history }) => {
 			})
 			setEditTitle(false)
 
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Saved' },
-			})
+			snackbarMessage(dispatch, 'Saved')
 		} catch (err) {
 			handleError(err, dispatch)
 			history.push('/')
 		}
-	}
-
-	const reorder = (list, startIndex, endIndex) => {
-		const result = Array.from(list)
-		const [ removed ] = result.splice(startIndex, 1)
-		result.splice(endIndex, 0, removed)
-
-		return result
 	}
 
 	const startUpdateField = field => {
@@ -159,10 +149,7 @@ const EditForm = ({ classes, match, history }) => {
 			setType('')
 			setFieldId('')
 
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Field updated' },
-			})
+			snackbarMessage(dispatch, 'Field Updated')
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -179,11 +166,7 @@ const EditForm = ({ classes, match, history }) => {
 			setFormFields([ ...formFields, addFormField ])
 			setNewFieldLabel('')
 			setNewFieldType('')
-
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Field added' },
-			})
+			snackbarMessage(dispatch, 'Field added')
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -198,16 +181,34 @@ const EditForm = ({ classes, match, history }) => {
 
 			setFormFields(formFields.filter(field => field._id !== idToDelete))
 			setIdToDelete(null)
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Field deleted' },
-			})
+			snackbarMessage(dispatch, 'Field deleted')
 		} catch (err) {
 			handleError(err, dispatch)
 		}
 	}
 
-	const onDragEnd = async result => {
+	const reorder = (list, startIndex, endIndex) => {
+		const result = Array.from(list)
+		const [ removed ] = result.splice(startIndex, 1)
+		result.splice(endIndex, 0, removed)
+
+		return result
+	}
+
+	const updateFieldOrderInDB = async fieldIds => {
+		try {
+			await client.request(UPDATE_FORM_MUTATION, {
+				_id: formId,
+				formFields: fieldIds,
+			})
+
+			snackbarMessage(dispatch, 'Updated')
+		} catch (err) {
+			handleError(err, dispatch)
+		}
+	}
+
+	const onDragEnd = result => {
 		const { destination, source } = result
 
 		if (
@@ -225,20 +226,8 @@ const EditForm = ({ classes, match, history }) => {
 
 		const fieldIds = newFields.map(field => field._id)
 
-		try {
-			await client.request(UPDATE_FORM_MUTATION, {
-				_id: formId,
-				formFields: fieldIds,
-			})
-
-			setFormFields(newFields)
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Updated' },
-			})
-		} catch (err) {
-			handleError(err, dispatch)
-		}
+		setFormFields(newFields)
+		updateFieldOrderInDB(fieldIds)
 	}
 
 	const renderTitle = bool => {
