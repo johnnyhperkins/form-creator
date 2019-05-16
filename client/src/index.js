@@ -10,8 +10,6 @@ import { HttpLink } from 'apollo-link-http'
 
 import AppRouter from './AppRouter'
 
-import * as serviceWorker from './serviceWorker'
-
 const httpLink = new HttpLink({
 	uri: 'https://border-box.herokuapp.com/graphql',
 })
@@ -34,5 +32,3 @@ const Root = () => {
 }
 
 ReactDOM.render(<Root />, document.getElementById('root'))
-
-serviceWorker.unregister()
