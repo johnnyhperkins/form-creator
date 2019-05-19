@@ -1,3 +1,5 @@
+import gql from 'graphql-tag'
+
 export const ME_QUERY = `query{
   me {
     name
@@ -7,16 +9,14 @@ export const ME_QUERY = `query{
   }
 }`
 
-export const GET_FORMS_QUERY = `query {
-  getForms {
-    _id
-    title
-    createdBy {
-      _id
-      name
-    }
-  }
-}`
+export const GET_FORMS_QUERY = gql`
+	query {
+		getForms {
+			_id
+			title
+		}
+	}
+`
 
 export const GET_RESPONSES_QUERY = `query($formId: ID!) {
   getResponses(formId: $formId) {

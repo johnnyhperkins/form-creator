@@ -1,4 +1,4 @@
-export const snackbarMessage = (dispatch, message) => {
+export const snackbarMessage = (message, dispatch) => {
 	dispatch({
 		type: 'SNACKBAR',
 		payload: { snackBarOpen: true, message },

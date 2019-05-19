@@ -109,7 +109,7 @@ const EditForm = ({ classes, match, history }) => {
 			})
 			setEditTitle(false)
 
-			snackbarMessage(dispatch, 'Saved')
+			snackbarMessage('Saved', dispatch)
 		} catch (err) {
 			handleError(err, dispatch)
 			history.push('/')
@@ -149,7 +149,7 @@ const EditForm = ({ classes, match, history }) => {
 			setType('')
 			setFieldId('')
 
-			snackbarMessage(dispatch, 'Field Updated')
+			snackbarMessage('Field Updated', dispatch)
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -166,7 +166,7 @@ const EditForm = ({ classes, match, history }) => {
 			setFormFields([ ...formFields, addFormField ])
 			setNewFieldLabel('')
 			setNewFieldType('')
-			snackbarMessage(dispatch, 'Field added')
+			snackbarMessage('Field added', dispatch)
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -181,7 +181,7 @@ const EditForm = ({ classes, match, history }) => {
 
 			setFormFields(formFields.filter(field => field._id !== idToDelete))
 			setIdToDelete(null)
-			snackbarMessage(dispatch, 'Field deleted')
+			snackbarMessage('Field deleted', dispatch)
 		} catch (err) {
 			handleError(err, dispatch)
 		}
@@ -202,7 +202,7 @@ const EditForm = ({ classes, match, history }) => {
 				formFields: fieldIds,
 			})
 
-			snackbarMessage(dispatch, 'Updated')
+			snackbarMessage('Updated', dispatch)
 		} catch (err) {
 			handleError(err, dispatch)
 		}

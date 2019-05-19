@@ -3,11 +3,14 @@ const Form = require('./models/Form')
 const FormField = require('./models/FormField')
 const FormFieldResponse = require('./models/FormFieldResponse')
 const ObjectId = require('mongoose').Types.ObjectId
+const bcrypt = require('bcrypt')
+const jsonwebtoken = require('jsonwebtoken')
 
 const authenticated = next => (root, args, ctx, info) => {
 	if (!ctx.currentUser) {
 		throw new AuthenticationError('You must be logged in')
 	}
+
 	return next(root, args, ctx, info)
 }
 
@@ -59,19 +62,36 @@ module.exports = {
 			})
 		},
 
-		createForm: authenticated(async (root, args, ctx) => {
-			const newForm = new Form({
-				...args.input,
-				createdBy: ctx.currentUser._id,
-			})
-			newForm.url = `/${ctx.currentUser.name.replace(/ /g, '')}/${newForm._id}`
+		// async login(root, { input }) {
 
-			return await newForm.save()
+		// },
+
+		// async signup(root, { input }) {
+
+		// },
+
+		createForm: authenticated(async (root, args, ctx) => {
+			// TO DO: FIGURE OUT WHY ERROR IS NOT BEING PASSED BACK TO THE CLIENT
+
+			try {
+				const newForm = new Form({
+					...args.input,
+					createdBy: ctx.currentUser._id,
+				})
+				newForm.url = `/${ctx.currentUser.name.replace(
+					/ /g,
+					'',
+				)}/${newForm._id}`
+
+				return await newForm.save()
+			} catch (err) {
+				throw new ApolloError(`Server Error ${err}`)
+			}
 		}),
 
 		deleteForm: authenticated(async (root, { formId: _id }, ctx) => {
 			try {
-				await Form.findOneAndDelete({
+				const form = await Form.findOneAndDelete({
 					_id,
 					createdBy: ObjectId(ctx.currentUser._id),
 				})
@@ -81,6 +101,7 @@ module.exports = {
 				await FormFieldResponse.deleteMany({
 					form: _id,
 				})
+				return form
 			} catch (err) {
 				throw new AuthenticationError(
 					'You are not authorized to delete this form',
