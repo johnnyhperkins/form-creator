@@ -71,42 +71,27 @@ module.exports = {
 		// },
 
 		createForm: authenticated(async (root, args, ctx) => {
-			// TO DO: FIGURE OUT WHY ERROR IS NOT BEING PASSED BACK TO THE CLIENT
+			const newForm = new Form({
+				...args.input,
+				createdBy: ctx.currentUser._id,
+			})
+			newForm.url = `/${ctx.currentUser.name.replace(/ /g, '')}/${newForm._id}`
 
-			try {
-				const newForm = new Form({
-					...args.input,
-					createdBy: ctx.currentUser._id,
-				})
-				newForm.url = `/${ctx.currentUser.name.replace(
-					/ /g,
-					'',
-				)}/${newForm._id}`
-
-				return await newForm.save()
-			} catch (err) {
-				throw new ApolloError(`Server Error ${err}`)
-			}
+			return await newForm.save()
 		}),
 
 		deleteForm: authenticated(async (root, { formId: _id }, ctx) => {
-			try {
-				const form = await Form.findOneAndDelete({
-					_id,
-					createdBy: ObjectId(ctx.currentUser._id),
-				})
-				await FormField.deleteMany({
-					form: _id,
-				})
-				await FormFieldResponse.deleteMany({
-					form: _id,
-				})
-				return form
-			} catch (err) {
-				throw new AuthenticationError(
-					'You are not authorized to delete this form',
-				)
-			}
+			const form = await Form.findOneAndDelete({
+				_id,
+				createdBy: ObjectId(ctx.currentUser._id),
+			})
+			await FormField.deleteMany({
+				form: _id,
+			})
+			await FormFieldResponse.deleteMany({
+				form: _id,
+			})
+			return form
 		}),
 
 		deleteField: authenticated(async (root, { _id, formId }) => {

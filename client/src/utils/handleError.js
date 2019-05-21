@@ -1,4 +1,4 @@
-const handleError = ({ response: { errors } }, dispatch) => {
+const handleError = (errors, dispatch) => {
 	const code = errors[0].extensions.code
 	let message
 

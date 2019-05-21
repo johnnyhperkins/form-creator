@@ -32,8 +32,9 @@ const Home = ({ classes, history }) => {
 	const [ title, setTitle ] = useState('')
 
 	const startDeleteForm = (formId, deleteForm) => {
-		const action = () => {
-			deleteForm({ variables: { formId } })
+		const action = async () => {
+			const { errors } = await deleteForm({ variables: { formId } })
+			if (errors) return handleError(errors, dispatch)
 			snackbarMessage('Form Deleted', dispatch)
 		}
 
@@ -50,6 +51,18 @@ const Home = ({ classes, history }) => {
 
 	const handleClick = id => {
 		history.push(`/form/${id}`)
+	}
+
+	const handleCreateForm = createForm => {
+		return async () => {
+			const { errors } = await createForm({
+				variables: { title },
+			})
+			if (errors) return handleError(errors, dispatch)
+			setAddForm(false)
+			setTitle('')
+			snackbarMessage('Form added', dispatch)
+		}
 	}
 
 	const renderFormItems = forms => {
@@ -135,10 +148,8 @@ const Home = ({ classes, history }) => {
 							{addForm && (
 								<Mutation
 									mutation={CREATE_FORM_MUTATION}
-									onError={err => console.error(err)}
 									errorPolicy="all"
 									update={(cache, { data: { createForm } }) => {
-										console.log('update function', createForm)
 										const { getForms } = cache.readQuery({
 											query: GET_FORMS_QUERY,
 										})
@@ -147,15 +158,8 @@ const Home = ({ classes, history }) => {
 											data: { getForms: getForms.concat([ createForm ]) },
 										})
 									}}>
-									{(createForm, { loading, error }) => (
-										<Button
-											onClick={() => {
-												console.log('errror', error)
-												createForm({ variables: { title } })
-												setAddForm(false)
-												setTitle('')
-												snackbarMessage('Form added', dispatch)
-											}}>
+									{createForm => (
+										<Button onClick={handleCreateForm(createForm)}>
 											Create Form
 										</Button>
 									)}
