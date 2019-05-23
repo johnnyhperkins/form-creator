@@ -20,10 +20,7 @@ import Fields from '../components/Fields'
 import EditDrawerContent from '../components/EditDrawerContent'
 
 import { GET_FORM_QUERY } from '../graphql/queries'
-import {
-	UPDATE_FORM_MUTATION,
-	DELETE_FIELD_MUTATION,
-} from '../graphql/mutations'
+import { UPDATE_FORM_MUTATION } from '../graphql/mutations'
 
 const EditForm = ({ classes, match, history }) => {
 	const { dispatch, state: { ui: { drawer: { open } } } } = useContext(Context)
@@ -33,7 +30,6 @@ const EditForm = ({ classes, match, history }) => {
 
 	const [ addField, setAddField ] = useState(false)
 	const [ editTitle, setEditTitle ] = useState(false)
-	const [ idToDelete, setIdToDelete ] = useState(null)
 
 	const { id: formId } = match.params
 
@@ -46,40 +42,6 @@ const EditForm = ({ classes, match, history }) => {
 			handleError(err, dispatch)
 		}
 	}, [])
-
-	useEffect(
-		() => {
-			if (idToDelete) {
-				confirmDelete()
-			}
-		},
-		[ idToDelete ],
-	)
-
-	const getForm = async () => {
-		const {
-			getForm: { title, url, formFields },
-		} = await client.request(GET_FORM_QUERY, {
-			_id: formId,
-		})
-
-		setUrl(url)
-		setTitle(title)
-		setFormFields(formFields)
-	}
-
-	const confirmDelete = () => {
-		dispatch({
-			type: 'TOGGLE_WARNING_MODAL',
-			payload: {
-				modalOpen: true,
-				title: 'Are you sure you want to delete this field?',
-				message:
-					'All associated responses will be permanently deleted as well.',
-				action: deleteField,
-			},
-		})
-	}
 
 	const handleUpdateForm = async () => {
 		try {
@@ -96,19 +58,16 @@ const EditForm = ({ classes, match, history }) => {
 		}
 	}
 
-	const deleteField = async () => {
-		try {
-			await client.request(DELETE_FIELD_MUTATION, {
-				_id: idToDelete,
-				formId,
-			})
+	const getForm = async () => {
+		const {
+			getForm: { title, url, formFields },
+		} = await client.request(GET_FORM_QUERY, {
+			_id: formId,
+		})
 
-			setFormFields(formFields.filter(field => field._id !== idToDelete))
-			setIdToDelete(null)
-			snackbarMessage('Field deleted', dispatch)
-		} catch (err) {
-			handleError(err, dispatch)
-		}
+		setUrl(url)
+		setTitle(title)
+		setFormFields(formFields)
 	}
 
 	const onClose = () => {

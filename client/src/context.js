@@ -15,7 +15,12 @@ const Context = createContext({
 			_id: '',
 		},
 	},
-	warningModal: { modalOpen: false, title: '', message: '', action: null },
+	warningModal: {
+		modalOpen: false,
+		title: '',
+		message: '',
+		action: null,
+	},
 	forms: [],
 	currentForm: null,
 	currentFormFields: [],

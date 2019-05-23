@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import FormField from '../components/FormField'
@@ -8,16 +8,58 @@ import handleError from '../utils/handleError'
 import { snackbarMessage } from '../utils/snackbarMessage'
 import Context from '../context'
 import { useClient } from '../client'
-import { UPDATE_FORM_MUTATION } from '../graphql/mutations'
+import {
+	UPDATE_FORM_MUTATION,
+	DELETE_FIELD_MUTATION,
+} from '../graphql/mutations'
 
 const FieldContainer = styled.div`
 	padding: 10px;
 	margin-bottom: 10px;
 `
 
-const Fields = ({ formFields, setFormFields, formId, setIdToDelete }) => {
+const Fields = ({ formFields, setFormFields, formId }) => {
 	const client = useClient()
 	const { dispatch } = useContext(Context)
+
+	const [ idToDelete, setIdToDelete ] = useState(null)
+
+	useEffect(
+		() => {
+			if (idToDelete) {
+				confirmDelete()
+			}
+		},
+		[ idToDelete ],
+	)
+
+	const confirmDelete = () => {
+		dispatch({
+			type: 'TOGGLE_WARNING_MODAL',
+			payload: {
+				modalOpen: true,
+				title: 'Are you sure you want to delete this field?',
+				message:
+					'All associated responses will be permanently deleted as well.',
+				action: deleteField,
+			},
+		})
+	}
+
+	const deleteField = async () => {
+		try {
+			await client.request(DELETE_FIELD_MUTATION, {
+				_id: idToDelete,
+				formId,
+			})
+
+			setFormFields(formFields.filter(field => field._id !== idToDelete))
+			setIdToDelete(null)
+			snackbarMessage('Field deleted', dispatch)
+		} catch (err) {
+			handleError(err, dispatch)
+		}
+	}
 
 	const updateFieldOrderInDB = async fieldIds => {
 		try {
@@ -73,7 +115,6 @@ const Fields = ({ formFields, setFormFields, formId, setIdToDelete }) => {
 									{provided => (
 										<FormField
 											setIdToDelete={setIdToDelete}
-											// startUpdateField={startUpdateField}
 											field={field}
 											formId={formId}
 											provided={provided}

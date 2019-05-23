@@ -25,6 +25,7 @@ const handleError = (errors, dispatch) => {
 	}
 
 	console.error(errors)
+
 	return dispatch({
 		type: 'SNACKBAR',
 		payload: { open: true, message },
