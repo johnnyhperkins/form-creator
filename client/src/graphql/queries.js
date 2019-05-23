@@ -30,18 +30,33 @@ export const GET_RESPONSES_QUERY = `query($formId: ID!) {
   }
 }`
 
-export const GET_FORM_QUERY = `query($_id: ID!) {
-  getForm(_id: $_id) {
-    _id
-    title
-    url
-    createdBy {
-      _id
-    }
-    formFields {
-      _id
-      type
-      label
-    }
-  }
-}`
+export const GET_FORM_QUERY = `
+	query($_id: ID!) {
+		getForm(_id: $_id) {
+			_id
+			title
+			url
+			createdBy {
+				_id
+			}
+			formFields {
+				_id
+				type
+				label
+			}
+		}
+	}
+`
+
+export const GET_FORM_DATA = `
+	query($_id: ID!) {
+		getForm(_id: $_id) {
+			title
+			formFields {
+				_id
+				type
+				label
+			}
+		}
+	}
+`

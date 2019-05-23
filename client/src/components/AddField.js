@@ -1,4 +1,6 @@
-import React from 'react'
+import React, { useState, useContext } from 'react'
+import { Mutation } from 'react-apollo'
+
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Button from '@material-ui/core/Button'
@@ -12,19 +14,45 @@ import ListItemText from '@material-ui/core/ListItemText'
 import AddIcon from '@material-ui/icons/Add'
 import { ListItemIcon } from '@material-ui/core'
 
+import { CREATE_FIELD_MUTATION } from '../graphql/mutations'
 import { FIELD_TYPES } from '../constants'
+import { snackbarMessage } from '../utils/snackbarMessage'
+import handleError from '../utils/handleError'
+import Context from '../context'
 
 const AddField = ({
 	classes,
 	formFields,
+	formId,
 	addField,
 	setAddField,
-	setNewFieldLabel,
-	newFieldLabel,
-	setNewFieldType,
-	newFieldType,
-	handleAddFormField,
+	setFormFields,
 }) => {
+	const { dispatch } = useContext(Context)
+	const [ newFieldLabel, setNewFieldLabel ] = useState('')
+	const [ newFieldType, setNewFieldType ] = useState('')
+
+	const handleCreateFormField = createFormField => {
+		return async () => {
+			const {
+				data: { createFormField: formField },
+				errors,
+			} = await createFormField({
+				variables: {
+					formId,
+					type: newFieldType,
+					label: newFieldLabel,
+				},
+			})
+
+			if (errors) return handleError(errors, dispatch)
+
+			setFormFields([ ...formFields, formField ])
+			setNewFieldLabel('')
+			setNewFieldType('')
+			snackbarMessage('Field added', dispatch)
+		}
+	}
 	return (
 		<List>
 			{!formFields.length && (
@@ -44,7 +72,6 @@ const AddField = ({
 							<TextField
 								placeholder="Label"
 								label="Label"
-								// variant="outlined"
 								className={`${classes.textField} ${classes.addField}`}
 								margin="none"
 								value={newFieldLabel}
@@ -78,7 +105,13 @@ const AddField = ({
 					)}
 				</div>
 				{addField && (
-					<Button onClick={() => handleAddFormField()}>Add Field</Button>
+					<Mutation mutation={CREATE_FIELD_MUTATION}>
+						{createFormField => (
+							<Button onClick={handleCreateFormField(createFormField)}>
+								Add Field
+							</Button>
+						)}
+					</Mutation>
 				)}
 			</ListItem>
 		</List>

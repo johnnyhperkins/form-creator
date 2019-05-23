@@ -1,5 +1,11 @@
 const handleError = (errors, dispatch) => {
-	const code = errors[0].extensions.code
+	let code
+	if (typeof errors === 'object') {
+		code = 'ERROR_OBJECT'
+	} else {
+		code = errors[0].extensions.code
+	}
+
 	let message
 
 	switch (code) {
@@ -10,14 +16,18 @@ const handleError = (errors, dispatch) => {
 		case 'UNAUTHENTICATED':
 			message = "You're not authorized to perform this action"
 			break
+		case 'ERROR_OBJECT':
+			message = 'Clientside Error thrown. Please try again later'
+			break
 		default:
 			message = 'Unknown Error'
 			break
 	}
 
+	console.error(errors)
 	return dispatch({
 		type: 'SNACKBAR',
-		payload: { snackBarOpen: true, message },
+		payload: { open: true, message },
 	})
 }
 

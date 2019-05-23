@@ -6,9 +6,10 @@ import { withStyles } from '@material-ui/core/styles'
 import Context from '../context'
 
 const UIAlerts = ({ classes }) => {
-	const { dispatch, state: { ui: { snackBarOpen, message } } } = useContext(
-		Context,
-	)
+	const {
+		dispatch,
+		state: { ui: { snackbar: { open, message } } },
+	} = useContext(Context)
 
 	const handleClose = (event, reason) => {
 		if (reason === 'clickaway') {
@@ -16,7 +17,10 @@ const UIAlerts = ({ classes }) => {
 		}
 		dispatch({
 			type: 'SNACKBAR',
-			payload: { snackBarOpen: false, message: '' },
+			payload: {
+				open: false,
+				message: '',
+			},
 		})
 	}
 	return (
@@ -25,7 +29,7 @@ const UIAlerts = ({ classes }) => {
 				vertical: 'bottom',
 				horizontal: 'left',
 			}}
-			open={snackBarOpen}
+			open={open}
 			autoHideDuration={2000}
 			onClose={handleClose}
 			ContentProps={{

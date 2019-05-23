@@ -26,7 +26,7 @@ import {
 } from '../graphql/mutations'
 import { GET_FORMS_QUERY } from '../graphql/queries'
 
-const Home = ({ classes, history }) => {
+const Home = ({ classes, history, client }) => {
 	const { dispatch } = useContext(Context)
 	const [ addForm, setAddForm ] = useState(false)
 	const [ title, setTitle ] = useState('')

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { withRouter } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
@@ -7,15 +7,25 @@ import EditIcon from '@material-ui/icons/Edit'
 import DehazeIcon from '@material-ui/icons/Dehaze'
 import styled from 'styled-components'
 
+import Context from '../context'
+
 const Field = styled.div``
 
-const FormField = ({
-	classes,
-	field,
-	provided,
-	setIdToDelete,
-	startUpdateField,
-}) => {
+const FormField = ({ classes, field, provided, setIdToDelete }) => {
+	const { dispatch } = useContext(Context)
+
+	const startUpdateField = field => {
+		const { type, label, _id } = field
+		dispatch({
+			type: 'TOGGLE_DRAWER',
+			payload: {
+				open: true,
+				label,
+				type,
+				_id,
+			},
+		})
+	}
 	const renderField = field => {
 		switch (field.type) {
 			case 'Text':

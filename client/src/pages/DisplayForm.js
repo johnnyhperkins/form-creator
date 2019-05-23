@@ -14,6 +14,7 @@ import { useClient } from '../client'
 import FieldResponse from '../components/FieldResponse'
 import handleError from '../utils/handleError'
 import Link from '../components/misc/Link'
+import { snackbarMessage } from '../utils/snackbarMessage'
 
 const DisplayForm = ({ classes, match, history }) => {
 	const { state: { currentUser }, dispatch } = useContext(Context)
@@ -28,7 +29,6 @@ const DisplayForm = ({ classes, match, history }) => {
 
 	const { form_id: formId } = match.params
 
-	// need to change this to use a public client for just displaying the form!!
 	const client = useClient()
 
 	useEffect(() => {
@@ -90,11 +90,7 @@ const DisplayForm = ({ classes, match, history }) => {
 			}))
 
 			await client.request(SUBMIT_FORM_MUTATION, { input })
-
-			dispatch({
-				type: 'SNACKBAR',
-				payload: { snackBarOpen: true, message: 'Form Submitted' },
-			})
+			snackbarMessage('Form Submitted', dispatch)
 
 			history.push('/submission-successful')
 		} catch (err) {

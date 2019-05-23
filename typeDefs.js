@@ -12,8 +12,6 @@ module.exports = gql`
 		_id: ID!
 		createdBy: User!
 		title: String!
-		action: String
-		method: String
 		url: String
 		formFields: [FormField!]
 	}
@@ -36,8 +34,6 @@ module.exports = gql`
 
 	input FormInput {
 		title: String
-		action: String
-		method: String
 		formFields: [ID!]
 	}
 
@@ -66,7 +62,7 @@ module.exports = gql`
 		# signup(username: String!, email: String!, password: String!): String
 		# login(email: String!, password: String!): String
 		deleteForm(formId: ID!): Form
-		addFormField(formId: ID!, input: FormFieldInput): FormField
+		createFormField(formId: ID!, input: FormFieldInput): FormField
 		updateFormField(_id: ID!, input: FormFieldInput): FormField
 		deleteField(_id: ID!, formId: ID!): FormField
 		submitForm(input: [FormFieldResponseInput]): [FormFieldResponse!]!

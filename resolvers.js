@@ -105,7 +105,7 @@ module.exports = {
 			)
 		}),
 
-		addFormField: authenticated(async (root, { formId, input }) => {
+		createFormField: authenticated(async (root, { formId, input }) => {
 			const formField = await new FormField({
 				...input,
 				form: formId,
@@ -123,14 +123,18 @@ module.exports = {
 		}),
 
 		updateFormField: authenticated(async (root, { _id, input }, ctx) => {
-			await FormField.findOneAndUpdate({ _id }, input)
+			return await FormField.findOneAndUpdate({ _id }, input, { new: true })
 		}),
 
 		updateForm: authenticated(async (root, { _id, input }, ctx) => {
-			await Form.findOneAndUpdate(
+			const form = await Form.findOneAndUpdate(
 				{ _id, createdBy: ctx.currentUser._id },
 				input,
+				{ new: true },
 			)
+			const formUpdated = await Form.populate(form, 'formFields')
+
+			return formUpdated
 		}),
 	},
 }

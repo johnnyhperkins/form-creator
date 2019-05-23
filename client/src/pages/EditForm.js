@@ -1,59 +1,39 @@
 import React, { useState, useEffect, useContext } from 'react'
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
-import styled from 'styled-components'
 import Grid from '@material-ui/core/Grid'
-import Drawer from '@material-ui/core/Drawer'
 import { withStyles } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Button from '@material-ui/core/Button'
 import EditIcon from '@material-ui/icons/Edit'
-import InputLabel from '@material-ui/core/InputLabel'
-import MenuItem from '@material-ui/core/MenuItem'
-import FormControl from '@material-ui/core/FormControl'
-import Select from '@material-ui/core/Select'
-import handleError from '../utils/handleError'
-import Link from '../components/misc/Link'
-
-import { snackbarMessage } from '../utils/snackbarMessage'
 import Divider from '@material-ui/core/Divider'
+import Drawer from '@material-ui/core/Drawer'
 
+import Link from '../components/misc/Link'
+import handleError from '../utils/handleError'
+import { snackbarMessage } from '../utils/snackbarMessage'
 import Context from '../context'
-import AddField from '../components/AddField'
+import { useClient } from '../client'
 
-import { FIELD_TYPES } from '../constants'
-import FormField from '../components/FormField'
+import AddField from '../components/AddField'
+import Fields from '../components/Fields'
+import EditDrawerContent from '../components/EditDrawerContent'
+
 import { GET_FORM_QUERY } from '../graphql/queries'
 import {
 	UPDATE_FORM_MUTATION,
-	CREATE_FIELD_MUTATION,
-	UPDATE_FIELD_MUTATION,
 	DELETE_FIELD_MUTATION,
 } from '../graphql/mutations'
 
-import { useClient } from '../client'
-
-const FieldContainer = styled.div`
-	padding: 10px;
-	margin-bottom: 10px;
-`
-
 const EditForm = ({ classes, match, history }) => {
-	const { dispatch } = useContext(Context)
+	const { dispatch, state: { ui: { drawer: { open } } } } = useContext(Context)
 	const [ title, setTitle ] = useState('')
 	const [ url, setUrl ] = useState('')
 	const [ formFields, setFormFields ] = useState(null)
-	const [ label, setLabel ] = useState('')
-	const [ type, setType ] = useState('')
-	const [ fieldId, setFieldId ] = useState('')
+
 	const [ addField, setAddField ] = useState(false)
 	const [ editTitle, setEditTitle ] = useState(false)
-	const [ newFieldLabel, setNewFieldLabel ] = useState('')
-	const [ newFieldType, setNewFieldType ] = useState('')
 	const [ idToDelete, setIdToDelete ] = useState(null)
-
-	const [ drawerOpen, setDrawerOpen ] = useState(false)
 
 	const { id: formId } = match.params
 
@@ -116,62 +96,6 @@ const EditForm = ({ classes, match, history }) => {
 		}
 	}
 
-	const startUpdateField = field => {
-		setDrawerOpen(!drawerOpen)
-		setType(field.type)
-		setLabel(field.label)
-		setFieldId(field._id)
-	}
-
-	const handleUpdateField = async () => {
-		try {
-			await client.request(UPDATE_FIELD_MUTATION, {
-				_id: fieldId,
-				type,
-				label,
-			})
-
-			const updatedFormFields = formFields.map(field => {
-				if (field._id === fieldId) {
-					return {
-						...field,
-						type,
-						label,
-					}
-				}
-
-				return field
-			})
-
-			setFormFields(updatedFormFields)
-			setDrawerOpen(!drawerOpen)
-			setLabel('')
-			setType('')
-			setFieldId('')
-
-			snackbarMessage('Field Updated', dispatch)
-		} catch (err) {
-			handleError(err, dispatch)
-		}
-	}
-
-	const handleAddFormField = async () => {
-		try {
-			const { addFormField } = await client.request(CREATE_FIELD_MUTATION, {
-				formId,
-				type: newFieldType,
-				label: newFieldLabel,
-			})
-
-			setFormFields([ ...formFields, addFormField ])
-			setNewFieldLabel('')
-			setNewFieldType('')
-			snackbarMessage('Field added', dispatch)
-		} catch (err) {
-			handleError(err, dispatch)
-		}
-	}
-
 	const deleteField = async () => {
 		try {
 			await client.request(DELETE_FIELD_MUTATION, {
@@ -187,47 +111,16 @@ const EditForm = ({ classes, match, history }) => {
 		}
 	}
 
-	const reorder = (list, startIndex, endIndex) => {
-		const result = Array.from(list)
-		const [ removed ] = result.splice(startIndex, 1)
-		result.splice(endIndex, 0, removed)
-
-		return result
-	}
-
-	const updateFieldOrderInDB = async fieldIds => {
-		try {
-			await client.request(UPDATE_FORM_MUTATION, {
-				_id: formId,
-				formFields: fieldIds,
-			})
-
-			snackbarMessage('Updated', dispatch)
-		} catch (err) {
-			handleError(err, dispatch)
-		}
-	}
-
-	const onDragEnd = result => {
-		const { destination, source } = result
-
-		if (
-			!destination ||
-			(destination.droppableId === source.droppableId &&
-				destination.index === source.index)
-		)
-			return
-
-		const newFields = reorder(
-			formFields,
-			result.source.index,
-			result.destination.index,
-		)
-
-		const fieldIds = newFields.map(field => field._id)
-
-		setFormFields(newFields)
-		updateFieldOrderInDB(fieldIds)
+	const onClose = () => {
+		return dispatch({
+			type: 'TOGGLE_DRAWER',
+			payload: {
+				open: false,
+				label: '',
+				type: '',
+				_id: '',
+			},
+		})
 	}
 
 	const renderTitle = bool => {
@@ -267,97 +160,30 @@ const EditForm = ({ classes, match, history }) => {
 							View Form
 						</Link>
 						<Divider className={classes.divider} />
-						<div>
-							<DragDropContext onDragEnd={onDragEnd}>
-								<Droppable droppableId={title}>
-									{provided => (
-										<FieldContainer
-											ref={provided.innerRef}
-											{...provided.droppableProps}>
-											{formFields.map((field, idx) => {
-												return (
-													<Draggable
-														draggableId={field._id}
-														key={field._id}
-														index={idx}>
-														{provided => (
-															<FormField
-																setIdToDelete={setIdToDelete}
-																startUpdateField={startUpdateField}
-																field={field}
-																formId={formId}
-																provided={provided}
-															/>
-														)}
-													</Draggable>
-												)
-											})}
-											{provided.placeholder}
-										</FieldContainer>
-									)}
-								</Droppable>
-							</DragDropContext>
-							<Divider className={classes.divider} />
-							<AddField
-								formFields={formFields}
-								addField={addField}
-								setAddField={setAddField}
-								setNewFieldLabel={setNewFieldLabel}
-								newFieldLabel={newFieldLabel}
-								setNewFieldType={setNewFieldType}
-								newFieldType={newFieldType}
-								handleAddFormField={handleAddFormField}
-							/>
-						</div>
+						<Fields
+							setFormFields={setFormFields}
+							formId={formId}
+							formFields={formFields}
+						/>
+
+						<Divider className={classes.divider} />
+
+						<AddField
+							formFields={formFields}
+							formId={formId}
+							addField={addField}
+							setAddField={setAddField}
+							setFormFields={setFormFields}
+						/>
 					</Grid>
-					<Drawer
-						open={drawerOpen}
-						anchor="right"
-						onClose={() => setDrawerOpen(!drawerOpen)}>
-						<div className={classes.drawer}>
-							<Typography component="h2" variant="h5">
-								Edit Field
-							</Typography>
 
-							<TextField
-								placeholder="Label"
-								className={classes.textField}
-								margin="normal"
-								value={label}
-								onChange={e => setLabel(e.target.value)}
-							/>
-
-							<FormControl className={classes.formControl}>
-								<InputLabel htmlFor="field-type">Select Type</InputLabel>
-								<Select
-									value={type}
-									label="Type"
-									variant="outlined"
-									onChange={e => setType(e.target.value)}
-									inputProps={{
-										name: 'type',
-										id: 'field-type',
-									}}>
-									<MenuItem value="">
-										<em>Select</em>
-									</MenuItem>
-									{Object.values(FIELD_TYPES).map((input, idx) => {
-										return (
-											<MenuItem key={idx} value={input}>
-												{input}
-											</MenuItem>
-										)
-									})}
-								</Select>
-							</FormControl>
-
-							<Button
-								variant="outlined"
-								className={classes.submitButton}
-								onClick={() => handleUpdateField(fieldId)}>
-								Update
-							</Button>
-						</div>
+					<Drawer open={open} anchor="right" onClose={onClose}>
+						<EditDrawerContent
+							classes={classes}
+							formFields={formFields}
+							setFormFields={setFormFields}
+							onClose={onClose}
+						/>
 					</Drawer>
 				</Grid>
 			</div>

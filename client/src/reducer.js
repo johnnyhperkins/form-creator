@@ -22,7 +22,19 @@ export default function reducer(state, { type, payload }) {
 		case 'SNACKBAR':
 			return {
 				...state,
-				ui: payload,
+				ui: {
+					...state.ui,
+					snackbar: payload,
+				},
+			}
+
+		case 'TOGGLE_DRAWER':
+			return {
+				...state,
+				ui: {
+					...state.ui,
+					drawer: payload,
+				},
 			}
 
 		case 'TOGGLE_WARNING_MODAL':
