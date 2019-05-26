@@ -14,6 +14,7 @@ import handleError from '../utils/handleError'
 import { snackbarMessage } from '../utils/snackbarMessage'
 import Context from '../context'
 import { useClient } from '../client'
+import Responses from '../components/Responses'
 
 import AddField from '../components/AddField'
 import Fields from '../components/Fields'
@@ -28,6 +29,8 @@ const EditForm = ({ classes, match, history }) => {
 	const [ url, setUrl ] = useState('')
 	const [ formFields, setFormFields ] = useState(null)
 
+	const [ responsesOpen, setResponsesOpen ] = useState(false)
+
 	const [ addField, setAddField ] = useState(false)
 	const [ editTitle, setEditTitle ] = useState(false)
 
@@ -36,11 +39,7 @@ const EditForm = ({ classes, match, history }) => {
 	const client = useClient()
 
 	useEffect(() => {
-		try {
-			getForm()
-		} catch (err) {
-			handleError(err, dispatch)
-		}
+		getForm()
 	}, [])
 
 	const handleUpdateForm = async () => {
@@ -59,15 +58,19 @@ const EditForm = ({ classes, match, history }) => {
 	}
 
 	const getForm = async () => {
-		const {
-			getForm: { title, url, formFields },
-		} = await client.request(GET_FORM_QUERY, {
-			_id: formId,
-		})
+		try {
+			const {
+				getForm: { title, url, formFields },
+			} = await client.request(GET_FORM_QUERY, {
+				_id: formId,
+			})
 
-		setUrl(url)
-		setTitle(title)
-		setFormFields(formFields)
+			setUrl(url)
+			setTitle(title)
+			setFormFields(formFields)
+		} catch (err) {
+			handleError(err, dispatch)
+		}
 	}
 
 	const onClose = () => {
@@ -99,12 +102,14 @@ const EditForm = ({ classes, match, history }) => {
 		}
 		return (
 			<Typography variant="h4">
-				{title}
-				<EditIcon
-					onClick={() => {
-						setEditTitle(!editTitle)
-					}}
-				/>
+				{responsesOpen ? 'Responses' : title}
+				{responsesOpen && (
+					<EditIcon
+						onClick={() => {
+							setEditTitle(!editTitle)
+						}}
+					/>
+				)}
 			</Typography>
 		)
 	}
@@ -115,25 +120,46 @@ const EditForm = ({ classes, match, history }) => {
 				<Grid container justify="center">
 					<Grid item sm={6}>
 						{renderTitle(editTitle)}
-						<Link to={url} small="true">
-							View Form
-						</Link>
-						<Divider className={classes.divider} />
-						<Fields
-							setFormFields={setFormFields}
-							formId={formId}
-							formFields={formFields}
-						/>
+						{Boolean(formFields.length) && (
+							<div>
+								<Link to={url} small="true">
+									View Form
+								</Link>
+								<span
+									onClick={() => setResponsesOpen(!responsesOpen)}
+									className={classes.smallLink}>
+									{responsesOpen ? 'Hide Responses' : 'Show Responses'}
+								</span>
+							</div>
+						)}
 
 						<Divider className={classes.divider} />
+						{!responsesOpen ? (
+							<div>
+								<Fields
+									setFormFields={setFormFields}
+									formId={formId}
+									formFields={formFields}
+								/>
 
-						<AddField
-							formFields={formFields}
-							formId={formId}
-							addField={addField}
-							setAddField={setAddField}
-							setFormFields={setFormFields}
-						/>
+								<Divider className={classes.divider} />
+
+								<AddField
+									formFields={formFields}
+									formId={formId}
+									addField={addField}
+									setAddField={setAddField}
+									setFormFields={setFormFields}
+								/>
+							</div>
+						) : (
+							<Responses
+								formId={formId}
+								classes={classes}
+								client={client}
+								dispatch={dispatch}
+							/>
+						)}
 					</Grid>
 
 					<Drawer open={open} anchor="right" onClose={onClose}>
@@ -177,6 +203,16 @@ const styles = {
 	},
 	deleteIcon: {
 		color: 'red',
+	},
+	smallLink: {
+		color: '#777',
+		display: 'inline-block',
+		marginRight: 10,
+		textDecoration: 'underline',
+		marginTop: 10,
+		fontSize: 14,
+		cursor: 'pointer',
+		fontFamily: 'Roboto',
 	},
 	formControl: {
 		width: '100%',

@@ -56,11 +56,16 @@ module.exports = gql`
 		getResponses(formId: ID!): [FormField!]!
 	}
 
+	type AuthPayload {
+		token: String
+		user: User
+	}
+
 	type Mutation {
 		createForm(input: FormInput!): Form
 		updateForm(_id: ID!, input: FormInput): Form
-		# signup(username: String!, email: String!, password: String!): String
-		# login(email: String!, password: String!): String
+		signup(email: String!, password: String!, name: String!): AuthPayload
+		login(email: String!, password: String!): AuthPayload
 		deleteForm(formId: ID!): Form
 		createFormField(formId: ID!, input: FormFieldInput): FormField
 		updateFormField(_id: ID!, input: FormFieldInput): FormField

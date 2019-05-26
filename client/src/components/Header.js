@@ -1,16 +1,16 @@
 import React, { useContext } from 'react'
-import Link from './misc/Link'
 import { withStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
-import Logo from './Icons/Logo'
 
+import Link from './misc/Link'
+import Logo from './Icons/Logo'
 import Context from '../context'
 import SignOut from './Auth/Signout'
 
 const Header = ({ classes }) => {
 	const { state } = useContext(Context)
-	const { currentUser } = state
+	const { currentUser, isGoogle } = state
 	return (
 		<AppBar position="static">
 			<Toolbar className={classes.navBar}>
@@ -18,7 +18,7 @@ const Header = ({ classes }) => {
 					<Logo />
 				</Link>
 				{currentUser ? (
-					<SignOut currentUser={currentUser} />
+					<SignOut currentUser={currentUser} isGoogle={isGoogle} />
 				) : (
 					<Link to="/login" color="white">
 						Log In

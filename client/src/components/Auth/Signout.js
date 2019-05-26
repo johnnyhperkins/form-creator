@@ -1,16 +1,20 @@
 import React, { useContext } from 'react'
 import Context from '../../context'
+import { withApollo } from 'react-apollo'
 import { GoogleLogout } from 'react-google-login'
 import { withStyles } from '@material-ui/core/styles'
 import ExitToApp from '@material-ui/icons/ExitToApp'
 import Typography from '@material-ui/core/Typography'
 
-const Signout = ({ classes, currentUser }) => {
+const Signout = ({ classes, currentUser, isGoogle, client }) => {
 	const { dispatch } = useContext(Context)
 	const onSignout = () => {
+		client.cache.reset()
+		localStorage.removeItem('bbToken')
 		dispatch({ type: 'SIGNOUT_USER' })
 	}
-	return (
+
+	return isGoogle ? (
 		<GoogleLogout
 			onLogoutSuccess={onSignout}
 			render={({ onClick }) => (
@@ -31,6 +35,15 @@ const Signout = ({ classes, currentUser }) => {
 				</div>
 			)}
 		/>
+	) : (
+		<div className={classes.root}>
+			<span className={classes.signout} onClick={onSignout}>
+				<Typography variant="body1" className={classes.white}>
+					Signout
+				</Typography>
+				<ExitToApp className={classes.buttonIcon} />
+			</span>
+		</div>
 	)
 }
 
@@ -57,4 +70,4 @@ const styles = theme => ({
 	},
 })
 
-export default withStyles(styles)(Signout)
+export default withApollo(withStyles(styles)(Signout))

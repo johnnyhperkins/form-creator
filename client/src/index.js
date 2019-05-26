@@ -19,23 +19,32 @@ export const BASE_URL =
 
 const httpLink = createHttpLink({
 	uri: BASE_URL,
+	credentials:
+		process.env.NODE_ENV === 'production' ? 'include' : 'same-origin',
 })
 
 const authLink = setContext((_, { headers }) => {
 	// get the authentication token from local storage if it exists
 	// need to figure out if theres a method on the google user object that lets me know if the token is expired
+
 	let token
-	if (window.gapi) {
+	let usertype
+	if (localStorage.getItem('bbToken')) {
+		token = localStorage.getItem('bbToken')
+		usertype = 'email'
+	} else if (window.gapi) {
 		token = window.gapi.auth2
 			.getAuthInstance()
 			.currentUser.get()
 			.getAuthResponse().id_token
+		usertype = 'google'
 	}
 
 	return {
 		headers: {
 			...headers,
 			authorization: token ? `${token}` : '',
+			usertype,
 		},
 	}
 })
@@ -46,18 +55,17 @@ const client = new ApolloClient({
 	defaultOptions: {
 		query: {
 			fetchPolicy: 'network-only',
-			errorPolicy: 'all',
+			errorPolicy: 'none',
 		},
 		mutate: {
-			errorPolicy: 'all',
+			errorPolicy: 'none',
 		},
 	},
+	onError: ({ networkError, graphQLErrors }) => {
+		console.log('graphQLErrors (consoled from index)', graphQLErrors)
+		console.log('networkError (consoled from index)', networkError)
+	},
 })
-
-// onError: ({ networkError, graphQLErrors }) => {
-// 	console.log('graphQLErrors', graphQLErrors)
-// 	console.log('networkError', networkError)
-// },
 
 const Root = () => {
 	const initialState = useContext(Context)

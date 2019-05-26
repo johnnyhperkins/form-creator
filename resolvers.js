@@ -1,10 +1,14 @@
 const { AuthenticationError, ApolloError } = require('apollo-server')
 const Form = require('./models/Form')
+const User = require('./models/User')
 const FormField = require('./models/FormField')
 const FormFieldResponse = require('./models/FormFieldResponse')
 const ObjectId = require('mongoose').Types.ObjectId
 const bcrypt = require('bcrypt')
-const jsonwebtoken = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
+require('dotenv').config()
+
+const APP_SECRET = process.env.APP_SECRET
 
 const authenticated = next => (root, args, ctx, info) => {
 	if (!ctx.currentUser) {
@@ -42,7 +46,6 @@ module.exports = {
 		async getForm(root, { _id }) {
 			const form = await Form.findOne({
 				_id,
-				// createdBy: ctx.currentUser._id, //potentially put back in for server side validation or is the fact the edit route already has auth protection enough?
 			}).populate('formFields')
 
 			return form
@@ -62,13 +65,46 @@ module.exports = {
 			})
 		},
 
-		// async login(root, { input }) {
+		async login(root, args) {
+			const user = await User.findOne({ email: args.email }).exec()
 
-		// },
+			if (!user) {
+				throw new AuthenticationError('No such user found')
+			}
 
-		// async signup(root, { input }) {
+			const valid = await bcrypt.compare(args.password, user.password)
 
-		// },
+			if (!valid) {
+				throw new AuthenticationError('Invalid password')
+			}
+
+			const token = jwt.sign({ userId: user.id }, APP_SECRET)
+
+			return {
+				token,
+				user,
+			}
+		},
+
+		async signup(root, args) {
+			const userExists = await User.findOne({ email: args.email }).exec()
+			if (userExists) {
+				// throw error here?
+				return {
+					token: '',
+					user: null,
+				}
+			}
+
+			const password = await bcrypt.hash(args.password, 8)
+			const user = await new User({ ...args, password }).save()
+			const token = jwt.sign({ userId: user.id }, APP_SECRET)
+
+			return {
+				token,
+				user,
+			}
+		},
 
 		createForm: authenticated(async (root, args, ctx) => {
 			const newForm = new Form({
@@ -85,6 +121,11 @@ module.exports = {
 				_id,
 				createdBy: ObjectId(ctx.currentUser._id),
 			})
+			if (!form) {
+				throw new AuthenticationError(
+					'You are not authorized to delete this form',
+				)
+			}
 			await FormField.deleteMany({
 				form: _id,
 			})

@@ -6,6 +6,11 @@ const mongoose = require('mongoose')
 require('dotenv').config()
 const { findOrCreateUser } = require('./controllers/userController')
 
+if (typeof localStorage === 'undefined' || localStorage === null) {
+	const LocalStorage = require('node-localstorage').LocalStorage
+	localStorage = new LocalStorage('./scratch')
+}
+
 mongoose
 	.connect(process.env.MONGO_URI, { useNewUrlParser: true })
 	.then(() => console.log('DB CONNECTED!'))
@@ -15,24 +20,26 @@ const server = new ApolloServer({
 	typeDefs,
 	resolvers,
 	mode: 'cors',
+	cors: true,
+	debug: true,
 	introspection: true,
 	playground: true,
 	context: async ({ req }) => {
-		let authToken = null
-		let currentUser = null
-		let publicUser = null
-
 		try {
-			authToken = req.headers.authorization
-			if (authToken) {
-				currentUser = await findOrCreateUser(authToken)
-			} else {
-				publicUser = { name: 'Anonymous' }
+			const userType = req.headers.usertype
+			const authToken = req.headers.authorization
+			let currentUser = null
+
+			if (!authToken && userType === 'public') {
+				currentUser = { name: 'Anonymous' }
+			} else if (authToken && userType) {
+				currentUser = await findOrCreateUser(authToken, userType)
 			}
+
+			return { currentUser }
 		} catch (err) {
 			console.error(`Unable to authenticate user with token ${authToken}`)
 		}
-		return { currentUser, publicUser }
 	},
 })
 

@@ -1,9 +1,12 @@
 export default function reducer(state, { type, payload }) {
 	switch (type) {
 		case 'LOGIN_USER':
+			const { me, isLoggedIn, isGoogle } = payload
 			return {
 				...state,
-				currentUser: payload,
+				currentUser: me,
+				isAuth: isLoggedIn,
+				isGoogle,
 			}
 
 		case 'IS_LOGGED_IN':
@@ -17,6 +20,7 @@ export default function reducer(state, { type, payload }) {
 				...state,
 				currentUser: null,
 				isAuth: false,
+				isGoogle: false,
 			}
 
 		case 'SNACKBAR':

@@ -1,36 +1,44 @@
 const User = require('../models/User')
 const { OAuth2Client } = require('google-auth-library')
 const client = new OAuth2Client(process.env.OAUTH_CLIENT_ID)
+const jwt = require('jsonwebtoken')
+require('dotenv').config()
 
-exports.findOrCreateUser = async token => {
-	// (continued from server.js):
-	// we verify the auth token is valid
-	const googleUser = await verifyAuthToken(token)
-	// check if user exists using the helper method below and the mongo function findOne
-	const user = await checkIfUserExists(googleUser.email)
-	// if user exists, return them; otherwise create new user in DB (continue to server.js above 'return currentUser')
-	return user ? user : createNewUser(googleUser)
+const APP_SECRET = process.env.APP_SECRET
+
+exports.findOrCreateUser = async (token, userType) => {
+	const user = await verifyAuthToken(token, userType)
+
+	return user
 }
 
-const verifyAuthToken = async token => {
+const verifyAuthToken = async (token, userType) => {
 	try {
-		// verifyIdToken is a built in method on OAuth2Client
-		const ticket = await client.verifyIdToken({
-			idToken: token,
-			audience: process.env.OAUTH_CLIENT_ID,
-		})
+		// For now this function only supports email signed up & google auth users.
+		// More auth methods could be added here in the future.
 
-		// getPayload is a method available on the returned promise object
+		if (userType === 'email') {
+			const { userId } = jwt.verify(token, APP_SECRET)
 
-		return ticket.getPayload()
+			return await User.findById(userId)
+		} else if (userType === 'google') {
+			const ticket = await client.verifyIdToken({
+				idToken: token,
+				audience: process.env.OAUTH_CLIENT_ID,
+			})
+			const googleUser = ticket.getPayload()
+			const existingUser = await checkIfUserExists(googleUser.email)
+
+			return existingUser ? existingUser : createNewUser(googleUser)
+		}
 	} catch (error) {
 		console.error(`Unable to verify auth token: ${error}`)
 	}
 }
 
 const checkIfUserExists = async email => await User.findOne({ email }).exec()
-const createNewUser = googleUser => {
-	const { name, email, picture } = googleUser
-	const user = { name, email, picture }
-	return new User(user).save()
+const createNewUser = user => {
+	const { name, email, picture, password = '' } = user
+	const newUser = { name, email, picture, password }
+	return new User(newUser).save()
 }

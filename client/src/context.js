@@ -3,6 +3,7 @@ import { createContext } from 'react'
 const Context = createContext({
 	currentUser: null,
 	isAuth: false,
+	isGoogle: false,
 	ui: {
 		snackbar: {
 			open: false,

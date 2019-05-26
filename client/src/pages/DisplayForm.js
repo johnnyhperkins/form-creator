@@ -8,10 +8,10 @@ import Divider from '@material-ui/core/Divider'
 import Typography from '@material-ui/core/Typography'
 
 import { SUBMIT_FORM_MUTATION } from '../graphql/mutations'
-import { GET_FORM_QUERY, GET_RESPONSES_QUERY } from '../graphql/queries'
+import { GET_FORM_QUERY } from '../graphql/queries'
 import Context from '../context'
 import { useClient } from '../client'
-import FieldResponse from '../components/FieldResponse'
+
 import handleError from '../utils/handleError'
 import Link from '../components/misc/Link'
 import { snackbarMessage } from '../utils/snackbarMessage'
@@ -24,20 +24,13 @@ const DisplayForm = ({ classes, match, history }) => {
 	})
 	const [ formFields, setFormFields ] = useState(null)
 	const [ fieldState, setFieldState ] = useState({})
-	const [ responsesOpen, setResponsesOpen ] = useState(false)
-	const [ formResponses, setFormResponses ] = useState([])
 
 	const { form_id: formId } = match.params
 
 	const client = useClient()
 
 	useEffect(() => {
-		try {
-			getForm()
-		} catch (err) {
-			handleError(err, dispatch)
-			history.push('/')
-		}
+		getForm()
 	}, [])
 
 	const setFormState = formFields => {
@@ -51,31 +44,22 @@ const DisplayForm = ({ classes, match, history }) => {
 	}
 
 	const getForm = async () => {
-		const {
-			getForm: { title, formFields, createdBy: { _id } },
-		} = await client.request(GET_FORM_QUERY, {
-			_id: formId,
-		})
+		try {
+			const {
+				getForm: { title, formFields, createdBy: { _id } },
+			} = await client.request(GET_FORM_QUERY, {
+				_id: formId,
+			})
 
-		setStaticState({
-			title,
-			ownerId: _id,
-		})
-		setFormFields(formFields)
-		setFormState(formFields)
-
-		if (currentUser && _id === currentUser._id) {
-			try {
-				const { getResponses } = await client.request(GET_RESPONSES_QUERY, {
-					formId,
-				})
-
-				if (getResponses.length) {
-					setFormResponses(getResponses)
-				}
-			} catch (err) {
-				handleError(err, dispatch)
-			}
+			setStaticState({
+				title,
+				ownerId: _id,
+			})
+			setFormFields(formFields)
+			setFormState(formFields)
+		} catch (err) {
+			handleError(err, dispatch)
+			history.push('/')
 		}
 	}
 
@@ -141,52 +125,28 @@ const DisplayForm = ({ classes, match, history }) => {
 			<div className={classes.root}>
 				<Grid container justify="center">
 					<Grid item sm={6} className={classes.flexColumn}>
-						<Typography variant="h4">
-							{responsesOpen ? 'Responses' : staticState.title}
-						</Typography>
+						<Typography variant="h4">{staticState.title}</Typography>
 						{currentUser &&
 						currentUser._id === staticState.ownerId && (
 							<div>
 								<Link to={`/form/${formId}`} small="true">
 									Edit Form
 								</Link>
-								<span
-									onClick={() => setResponsesOpen(!responsesOpen)}
-									className={classes.smallLink}>
-									{responsesOpen ? 'View Form' : 'View Responses'}
-								</span>
 							</div>
 						)}
 						<Divider className={classes.divider} />
-
-						{responsesOpen ? (
-							<div>
-								{formResponses && (
-									<div>
-										{formResponses.map((field, idx) => (
-											<FieldResponse
-												classes={classes}
-												field={field}
-												key={idx}
-											/>
-										))}
+						<div>
+							{formFields.map((field, key) => {
+								return (
+									<div key={key} className={classes.formItem}>
+										{renderField(field)}
 									</div>
-								)}
-							</div>
-						) : (
-							<div>
-								{formFields.map((field, key) => {
-									return (
-										<div key={key} className={classes.formItem}>
-											{renderField(field)}
-										</div>
-									)
-								})}
-								<Button variant="outlined" onClick={handleSubmit}>
-									Submit
-								</Button>
-							</div>
-						)}
+								)
+							})}
+							<Button variant="outlined" onClick={handleSubmit}>
+								Submit
+							</Button>
+						</div>
 					</Grid>
 				</Grid>
 			</div>
@@ -214,16 +174,6 @@ const styles = {
 	},
 	submitButton: {
 		marginTop: 15,
-	},
-	smallLink: {
-		color: '#777',
-		display: 'inline-block',
-		marginRight: 10,
-		textDecoration: 'underline',
-		marginTop: 10,
-		fontSize: 14,
-		cursor: 'pointer',
-		fontFamily: 'Roboto',
 	},
 	divider: {
 		margin: '15px 0',

@@ -1,5 +1,34 @@
 import gql from 'graphql-tag'
 
+// Auth
+
+export const SIGNUP_MUTATION = gql`
+	mutation SignupMutation($email: String!, $password: String!, $name: String!) {
+		signup(email: $email, password: $password, name: $name) {
+			user {
+				_id
+				name
+				email
+			}
+			token
+		}
+	}
+`
+
+export const LOGIN_MUTATION = gql`
+	mutation LoginMutation($email: String!, $password: String!) {
+		login(email: $email, password: $password) {
+			user {
+				_id
+				name
+				email
+			}
+			token
+		}
+	}
+`
+// Form
+
 export const CREATE_FORM_MUTATION = gql`
 	mutation($title: String!) {
 		createForm(input: { title: $title }) {
@@ -12,7 +41,6 @@ export const CREATE_FORM_MUTATION = gql`
 		}
 	}
 `
-
 export const UPDATE_FORM_MUTATION = `
 	mutation($_id: ID!, $title: String, $formFields: [ID!]) {
 		updateForm(_id: $_id, input: { title: $title, formFields: $formFields }) {
@@ -39,6 +67,7 @@ export const DELETE_FORM_MUTATION = gql`
 		}
 	}
 `
+// Field
 
 export const DELETE_FIELD_MUTATION = `
 	mutation($_id: ID!, $formId: ID!) {
@@ -69,6 +98,8 @@ export const UPDATE_FIELD_MUTATION = `
 		}
 	}
 `
+
+// Submit
 
 export const SUBMIT_FORM_MUTATION = `
 	mutation($input: [FormFieldResponseInput]) {

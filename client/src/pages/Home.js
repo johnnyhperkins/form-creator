@@ -33,9 +33,10 @@ const Home = ({ classes, history, client }) => {
 
 	const startDeleteForm = (formId, deleteForm) => {
 		const action = async () => {
-			const { errors } = await deleteForm({ variables: { formId } })
-			if (errors) return handleError(errors, dispatch)
-			snackbarMessage('Form Deleted', dispatch)
+			const res = await deleteForm({ variables: { formId } })
+			if (Boolean(res)) {
+				snackbarMessage('Form Deleted', dispatch)
+			}
 		}
 
 		dispatch({
@@ -77,6 +78,7 @@ const Home = ({ classes, history, client }) => {
 					<ListItemText primary={form.title} />
 					<Mutation
 						mutation={DELETE_FORM_MUTATION}
+						onError={err => handleError(err, dispatch)}
 						update={(cache, { data: { deleteForm: { _id } } }) => {
 							const { getForms } = cache.readQuery({
 								query: GET_FORMS_QUERY,
@@ -90,10 +92,7 @@ const Home = ({ classes, history, client }) => {
 							})
 						}}>
 						{deleteForm => (
-							<Button
-								onClick={() => {
-									startDeleteForm(form._id, deleteForm)
-								}}>
+							<Button onClick={() => startDeleteForm(form._id, deleteForm)}>
 								<DeleteIcon className={classes.deleteIcon} />
 							</Button>
 						)}
