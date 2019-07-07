@@ -12,7 +12,11 @@ if (typeof localStorage === 'undefined' || localStorage === null) {
 }
 
 mongoose
-	.connect(process.env.MONGO_URI, { useNewUrlParser: true })
+	.connect(process.env.MONGO_URI, {
+		useNewUrlParser: true,
+		useCreateIndex: true,
+		useFindAndModify: false,
+	})
 	.then(() => console.log('DB CONNECTED!'))
 	.catch(err => console.log(err))
 
