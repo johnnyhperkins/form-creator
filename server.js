@@ -23,8 +23,7 @@ mongoose
 const server = new ApolloServer({
 	typeDefs,
 	resolvers,
-	mode: 'cors',
-	cors: true,
+	cors: false,
 	debug: true,
 	introspection: true,
 	playground: true,

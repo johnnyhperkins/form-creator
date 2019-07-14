@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { GraphQLClient } from 'graphql-request'
 
 import Grid from '@material-ui/core/Grid'
-import Divider from '@material-ui/core/Divider'
 import { withStyles } from '@material-ui/core/styles'
 import { ME_QUERY } from '../../graphql/queries'
 import TextField from '@material-ui/core/TextField'
@@ -52,6 +51,13 @@ const EmailLogin = ({ classes, dispatch }) => {
 					{error}
 				</Typography>
 			)}
+			<Button
+				onClick={() => {
+					setError('')
+					setLogin(!login)
+				}}>
+				{login ? 'Need to create an account?' : 'Already have an account?'}
+			</Button>
 			<Typography variant="h4">{login ? 'Login' : 'Sign Up'}</Typography>
 			{!login && (
 				<TextField
@@ -63,14 +69,6 @@ const EmailLogin = ({ classes, dispatch }) => {
 					onChange={e => setName(e.target.value)}
 				/>
 			)}
-
-			<Button
-				onClick={() => {
-					setError('')
-					setLogin(!login)
-				}}>
-				{login ? 'Need to create an account?' : 'Already have an account?'}
-			</Button>
 
 			<TextField
 				required
