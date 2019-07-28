@@ -23,10 +23,13 @@ mongoose
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  cors: true,
-  debug: true,
-  introspection: true,
-  playground: true,
+  cors: {
+    origin: 'https://borderbox.johnnyhperkins.now.sh',
+    credentials: true
+  },
+  debug: process.env.NODE_ENV !== 'production',
+  introspection: process.env.NODE_ENV !== 'production',
+  playground: process.env.NODE_ENV !== 'production',
   context: async ({ req }) => {
     try {
       const userType = req.headers.usertype
